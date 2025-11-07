@@ -26,7 +26,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: url('images/effects/8888.png') center/cover no-repeat;
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -49,10 +49,11 @@
         #game-container {
             width: 100%;
             height: 100%;
-            background: url('images/backgrounds/9999.png') center/cover no-repeat;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
             display: none;
             flex-direction: column;
             position: relative;
+            overflow: hidden;
         }
         
         #reels-container {
@@ -60,18 +61,19 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 20px;
+            padding: 10px;
             position: relative;
         }
         
         #reels {
             display: flex;
-            width: 90%;
-            height: 80%;
+            width: 95%;
+            height: 75%;
             background: rgba(0, 0, 0, 0.7);
             border-radius: 15px;
             padding: 10px;
             box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+            border: 3px solid #ffcc00;
         }
         
         .reel {
@@ -95,11 +97,13 @@
             border: 1px solid rgba(100, 100, 150, 0.3);
             border-radius: 8px;
             margin: 2px 0;
-            font-size: 2rem;
             color: white;
             transition: all 0.3s ease;
-            background-size: cover;
+            background-size: 80% 80%;
             background-position: center;
+            background-repeat: no-repeat;
+            font-weight: bold;
+            font-size: 1.5rem;
         }
         
         .symbol.win {
@@ -333,6 +337,21 @@
         .spinning {
             animation: spin 0.1s linear infinite;
         }
+        
+        /* 符号的替代显示 - 如果没有图片 */
+        .symbol[data-symbol="WILD"] { background-color: #ff9900; }
+        .symbol[data-symbol="SCATTER"] { background-color: #ff3333; }
+        .symbol[data-symbol="BONES"] { background-color: #cc9966; }
+        .symbol[data-symbol="SYM1"] { background-color: #3366cc; }
+        .symbol[data-symbol="SYM2"] { background-color: #33cc66; }
+        .symbol[data-symbol="SYM3"] { background-color: #cc33cc; }
+        .symbol[data-symbol="SYM4"] { background-color: #cccc33; }
+        .symbol[data-symbol="SYM5"] { background-color: #33cccc; }
+        .symbol[data-symbol="SYM6"] { background-color: #cc6633; }
+        .symbol[data-symbol="SYM7"] { background-color: #9966cc; }
+        .symbol[data-symbol="SYM8"] { background-color: #66cc99; }
+        .symbol[data-symbol="SYM9"] { background-color: #cc9966; }
+        .symbol[data-symbol="SYM10"] { background-color: #6699cc; }
     </style>
 </head>
 <body>
@@ -347,20 +366,20 @@
         <div id="paytable">
             <h3>赔付表</h3>
             <div class="symbol-info">
-                <div class="symbol-img" style="background-image: url('images/symbols/302.png')"></div>
+                <div class="symbol-img" style="background-color: #ff9900;">W</div>
                 <div class="symbol-payouts">
                     <div>WILD: 可替代任何符号</div>
                 </div>
             </div>
             <div class="symbol-info">
-                <div class="symbol-img" style="background-image: url('images/symbols/301.png')"></div>
+                <div class="symbol-img" style="background-color: #ff3333;">S</div>
                 <div class="symbol-payouts">
                     <div>SCATTER: 3个=10倍总投注, 4个=20倍, 5个=50倍</div>
                     <div>3个以上触发免费旋转</div>
                 </div>
             </div>
             <div class="symbol-info">
-                <div class="symbol-img" style="background-image: url('images/symbols/300.png')"></div>
+                <div class="symbol-img" style="background-color: #cc9966;">B</div>
                 <div class="symbol-payouts">
                     <div>BONES: 5个=150倍线注</div>
                 </div>
@@ -412,12 +431,10 @@
         </div>
         
         <div id="big-win-effect">
-            <img src="images/effects/500.png" alt="BIG WIN">
             <div class="effect-text">BIG WIN!</div>
         </div>
         
         <div id="free-spin-effect">
-            <img src="images/effects/501.png" alt="FREE SPIN">
             <div class="effect-text">FREE SPINS!</div>
         </div>
     </div>
@@ -486,17 +503,6 @@
             freeSpins: 0
         };
 
-        // 音频对象
-        const audio = {
-            main: new Audio('audio/main.wav'),
-            freeSpin: new Audio('audio/free-spin.wav'),
-            spin: new Audio('audio/spin.wav'),
-            stop: new Audio('audio/stop.wav'),
-            winBig: new Audio('audio/win-big.wav'),
-            winSmall: new Audio('audio/win-small.wav'),
-            uiClick: new Audio('audio/ui-click.wav')
-        };
-
         // 初始化游戏
         document.addEventListener('DOMContentLoaded', function() {
             initGame();
@@ -504,9 +510,6 @@
             checkOrientation();
             window.addEventListener('resize', checkOrientation);
             window.addEventListener('orientationchange', checkOrientation);
-            
-            // 预加载图片
-            preloadImages();
         });
 
         // 初始化游戏界面
@@ -564,13 +567,10 @@
             gameState.balance -= spinCost;
             gameState.isSpinning = true;
             
-            // 播放旋转音效
-            playSound(audio.spin);
-            
             // 开始转轴动画
             startReelAnimation();
             
-            // 模拟RNG结果（实际游戏中应由服务器提供）
+            // 模拟RNG结果
             setTimeout(() => {
                 stopReelsAndCheckWin();
             }, 2000);
@@ -594,7 +594,6 @@
                 // 每个转轴依次停止
                 setTimeout(() => {
                     reel.classList.remove('spinning');
-                    playSound(audio.uiClick);
                 }, 1000 + index * 300);
             });
             
@@ -642,7 +641,7 @@
             }
         }
 
-        // 生成随机结果（模拟RNG，实际应由服务器控制）
+        // 生成随机结果（模拟RNG）
         function generateRandomResult() {
             const result = [];
             
@@ -684,8 +683,13 @@
                     const symbol = symbols[j];
                     const symbolData = gameState.symbols[symbolIndex];
                     
-                    symbol.textContent = '';
-                    symbol.style.backgroundImage = `url('${symbolData.image}')`;
+                    symbol.textContent = symbolData.name.charAt(0);
+                    symbol.dataset.symbol = symbolData.name;
+                    
+                    // 如果有图片，使用图片
+                    if (symbolData.image) {
+                        symbol.style.backgroundImage = `url('${symbolData.image}')`;
+                    }
                 }
             }
         }
@@ -773,13 +777,6 @@
                 // 绘制赢线
                 drawWinLine(win.positions);
             });
-            
-            // 播放中奖音效
-            if (gameState.totalWin >= gameState.currentBet * 10) {
-                playSound(audio.winBig);
-            } else {
-                playSound(audio.winSmall);
-            }
         }
 
         // 绘制赢线
@@ -822,9 +819,6 @@
             
             const effect = document.getElementById('free-spin-effect');
             effect.style.display = 'flex';
-            
-            // 播放免费旋转音效
-            playSound(audio.freeSpin);
             
             // 触发震动
             if (navigator.vibrate) {
@@ -871,8 +865,6 @@
             } else {
                 document.getElementById('auto-spin').style.background = 'linear-gradient(145deg, #ff3333, #cc0000)';
             }
-            
-            playSound(audio.stop);
         }
 
         // 增加投注额
@@ -880,7 +872,6 @@
             if (gameState.currentBet < 10) {
                 gameState.currentBet++;
                 updateDisplays();
-                playSound(audio.stop);
             }
         }
 
@@ -889,7 +880,6 @@
             if (gameState.currentBet > 1) {
                 gameState.currentBet--;
                 updateDisplays();
-                playSound(audio.stop);
             }
         }
 
@@ -899,7 +889,6 @@
                 gameState.currentLines += 5;
                 if (gameState.currentLines > 40) gameState.currentLines = 40;
                 updateDisplays();
-                playSound(audio.stop);
             }
         }
 
@@ -909,7 +898,6 @@
                 gameState.currentLines -= 5;
                 if (gameState.currentLines < 25) gameState.currentLines = 25;
                 updateDisplays();
-                playSound(audio.stop);
             }
         }
 
@@ -917,7 +905,6 @@
         function togglePaytable() {
             const paytable = document.getElementById('paytable');
             paytable.style.display = paytable.style.display === 'block' ? 'none' : 'block';
-            playSound(audio.stop);
         }
 
         // 更新显示
@@ -942,37 +929,6 @@
                 orientationMessage.style.display = 'none';
                 gameContainer.style.display = 'flex';
             }
-        }
-
-        // 预加载图片
-        function preloadImages() {
-            gameState.symbols.forEach(symbol => {
-                const img = new Image();
-                img.src = symbol.image;
-            });
-            
-            // 预加载特效图片
-            const effectImages = [
-                'images/effects/500.png',
-                'images/effects/501.png',
-                'images/effects/7777.png',
-                'images/effects/8888.png',
-                'images/backgrounds/9999.png'
-            ];
-            
-            effectImages.forEach(src => {
-                const img = new Image();
-                img.src = src;
-            });
-        }
-
-        // 播放音效
-        function playSound(sound) {
-            sound.currentTime = 0;
-            sound.play().catch(e => {
-                // 忽略自动播放被阻止的错误
-                console.log('音频播放被阻止:', e);
-            });
         }
     </script>
 </body>
