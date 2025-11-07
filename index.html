@@ -67,7 +67,7 @@
             height: 80%;
             background: rgba(0, 0, 0, 0.7);
             border-radius: 15px;
-            padding: 0;
+            padding: 10px;
             box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
         }
         
@@ -76,7 +76,7 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            margin: 0 1px;
+            margin: 0 5px;
             border-radius: 10px;
             background: rgba(30, 30, 60, 0.8);
             position: relative;
@@ -84,16 +84,16 @@
         
         .symbol {
             width: 100%;
-            height: calc(100% / 3);
+            height: 33.33%;
             display: flex;
             justify-content: center;
             align-items: center;
             background: rgba(40, 40, 80, 0.9);
-            border: none;
+            border: 1px solid rgba(100, 100, 150, 0.3);
             border-radius: 8px;
-            margin: 0;
+            margin: 2px 0;
             font-size: 2rem;
-            color: transparent;
+            color: white;
             transition: all 0.3s ease;
         }
         
@@ -632,7 +632,7 @@
                     const symbol = symbols[j];
                     const symbolData = gameState.symbols[symbolIndex];
                     
-                    symbol.textContent = '';
+                    symbol.textContent = symbolData.name.charAt(0);
                     symbol.style.backgroundImage = `url('${symbolData.image}')`;
                     symbol.style.backgroundSize = 'cover';
                     symbol.style.backgroundPosition = 'center';
