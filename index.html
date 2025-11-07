@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LYX Slot Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif;
+        }
+        
+        body {
+            background: #000;
+            color: #fff;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        #orientation-message {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        #orientation-message h1 {
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            color: #ffd700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px 20px;
+            border-radius: 10px;
+        }
+        
+        #game-container {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            display: none;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        #reels-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            position: relative;
+        }
+        
+        /* 转轴尺寸调整 - 16:9比例 */
+        #reels {
+            display: flex;
+            width: 95%;
+            height: 65%; /* 调整为16:9比例 */
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+            border: 3px solid #ffcc00;
+        }
+        
+        .reel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            margin: 0 8px;
+            border-radius: 10px;
+            background: rgba(30, 30, 60, 0.8);
+            position: relative;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+        
+        /* 符号尺寸调整 - 保持正方形 */
+        .symbol {
+            width: 100%;
+            aspect-ratio: 1 / 1; /* 确保符号是正方形 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(40, 40, 80, 0.9);
+            border: 1px solid rgba(100, 100, 150, 0.3);
+            border-radius: 8px;
+            margin: 5px 0;
+            color: white;
+            transition: all 0.3s ease;
+            background-size: 80% 80%;
+            background-position: center;
+            background-repeat: no-repeat;
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+        
+        .symbol.win {
+            animation: winGlow 1s infinite alternate;
+        }
+        
+        @keyframes winGlow {
+            from { box-shadow: 0 0 5px #ffd700; }
+            to { box-shadow: 0 0 20px #ffd700, 0 0 30px #ff9900; }
+        }
+        
+        #controls {
+            height: 120px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border-top: 2px solid #444;
+        }
+        
+        .control-group {
+            display: flex;
+            align-items: center;
+        }
+        
+        .control-button {
+            width: 60px;
+            height: 60px;
+            margin: 0 5px;
+            border: none;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #ff3333, #cc0000);
+            color: white;
+            font-weight: bold;
+            font-size: 0.8rem;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.2s;
+        }
+        
+        .control-button:hover {
+            transform: scale(1.05);
+        }
+        
+        .control-button:active {
+            transform: scale(0.95);
+        }
+        
+        #spin-button {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(145deg, #ffcc00, #ff9900);
+            font-size: 1.2rem;
+        }
+        
+        .display-panel {
+            background: rgba(0, 40, 80, 0.8);
+            border-radius: 10px;
+            padding: 10px 15px;
+            margin: 0 10px;
+            min-width: 120px;
+            text-align: center;
+            box-shadow: 0 0 10px rgba(0, 150, 255, 0.5);
+        }
+        
+        .display-label {
+            font-size: 0.8rem;
+            color: #aaa;
+            margin-bottom: 5px;
+        }
+        
+        .display-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #ffcc00;
+        }
+        
+        #win-lines-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+        
+        .win-line {
+            stroke: #ffcc00;
+            stroke-width: 3;
+            stroke-dasharray: 10;
+            animation: dash 1s linear infinite;
+            filter: drop-shadow(0 0 5px #ffcc00);
+        }
+        
+        @keyframes dash {
+            to {
+                stroke-dashoffset: 20;
+            }
+        }
+        
+        #big-win-effect, #free-spin-effect {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            flex-direction: column;
+        }
+        
+        .effect-text {
+            font-size: 4rem;
+            color: #ffcc00;
+            text-shadow: 0 0 10px #ff9900;
+            margin-top: 20px;
+            animation: glow 1s infinite alternate;
+        }
+        
+        @keyframes glow {
+            from { text-shadow: 0 0 10px #ff9900; }
+            to { text-shadow: 0 0 20px #ffcc00, 0 0 30px #ff9900; }
+        }
+        
+        #info-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(0, 100, 200, 0.8);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            z-index: 20;
+        }
+        
+        #paytable {
+            position: absolute;
+            top: 70px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid #ffcc00;
+            border-radius: 10px;
+            padding: 20px;
+            width: 300px;
+            display: none;
+            z-index: 20;
+        }
+        
+        #paytable h3 {
+            color: #ffcc00;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .symbol-info {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 5px;
+            border-bottom: 1px solid #333;
+        }
+        
+        .symbol-img {
+            width: 40px;
+            height: 40px;
+            margin-right: 10px;
+            background: #333;
+            border-radius: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-weight: bold;
+            background-size: cover;
+            background-position: center;
+        }
+        
+        .symbol-payouts {
+            flex: 1;
+            font-size: 0.9rem;
+        }
+        
+        @media (orientation: portrait) {
+            #orientation-message {
+                display: flex;
+            }
+            #game-container {
+                display: none;
+            }
+        }
+        
+        @media (orientation: landscape) {
+            #orientation-message {
+                display: none;
+            }
+            #game-container {
+                display: flex;
+            }
+        }
+        
+        /* 转轴旋转动画 */
+        @keyframes spin {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-100%); }
+        }
+        
+        .spinning {
+            animation: spin 0.1s linear infinite;
+        }
+        
+        /* 符号的替代显示 - 如果没有图片 */
+        .symbol[data-symbol="WILD"] { background-color: #ff9900; }
+        .symbol[data-symbol="SCATTER"] { background-color: #ff3333; }
+        .symbol[data-symbol="BONES"] { background-color: #cc9966; }
+        .symbol[data-symbol="SYM1"] { background-color: #3366cc; }
+        .symbol[data-symbol="SYM2"] { background-color: #33cc66; }
+        .symbol[data-symbol="SYM3"] { background-color: #cc33cc; }
+        .symbol[data-symbol="SYM4"] { background-color: #cccc33; }
+        .symbol[data-symbol="SYM5"] { background-color: #33cccc; }
+        .symbol[data-symbol="SYM6"] { background-color: #cc6633; }
+        .symbol[data-symbol="SYM7"] { background-color: #9966cc; }
+        .symbol[data-symbol="SYM8"] { background-color: #66cc99; }
+        .symbol[data-symbol="SYM9"] { background-color: #cc9966; }
+        .symbol[data-symbol="SYM10"] { background-color: #6699cc; }
+    </style>
+</head>
+<body>
+    <div id="orientation-message">
+        <h1>请旋转手机以开始游戏</h1>
+        <p>请将设备横向放置以获得最佳游戏体验</p>
+    </div>
+    
+    <div id="game-container">
+        <div id="info-button">i</div>
+        
+        <div id="paytable">
+            <h3>赔付表</h3>
+            <div class="symbol-info">
+                <div class="symbol-img" style="background-color: #ff9900;">W</div>
+                <div class="symbol-payouts">
+                    <div>WILD: 可替代任何符号</div>
+                </div>
+            </div>
+            <div class="symbol-info">
+                <div class="symbol-img" style="background-color: #ff3333;">S</div>
+                <div class="symbol-payouts">
+                    <div>SCATTER: 3个=10倍总投注, 4个=20倍, 5个=50倍</div>
+                    <div>3个以上触发免费旋转</div>
+                </div>
+            </div>
+            <div class="symbol-info">
+                <div class="symbol-img" style="background-color: #cc9966;">B</div>
+                <div class="symbol-payouts">
+                    <div>BONES: 5个=150倍线注</div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="reels-container">
+            <div id="reels">
+                <!-- 转轴将通过JS动态生成 -->
+            </div>
+            <svg id="win-lines-overlay" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
+        </div>
+        
+        <div id="controls">
+            <div class="control-group">
+                <div class="display-panel">
+                    <div class="display-label">LINE</div>
+                    <div class="display-value" id="lines-display">25</div>
+                </div>
+                <button class="control-button" id="line-minus">-</button>
+                <button class="control-button" id="line-plus">+</button>
+            </div>
+            
+            <div class="control-group">
+                <button class="control-button" id="auto-spin">AUTO</button>
+                <button class="control-button" id="spin-button">SPIN</button>
+            </div>
+            
+            <div class="control-group">
+                <button class="control-button" id="bet-minus">-</button>
+                <div class="display-panel">
+                    <div class="display-label">BET</div>
+                    <div class="display-value" id="bet-display">1</div>
+                </div>
+                <button class="control-button" id="bet-plus">+</button>
+            </div>
+            
+            <div class="control-group">
+                <div class="display-panel">
+                    <div class="display-label">BALANCE</div>
+                    <div class="display-value" id="balance-display">1000</div>
+                </div>
+                <div class="display-panel">
+                    <div class="display-label">WIN</div>
+                    <div class="display-value" id="win-display">0</div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="big-win-effect">
+            <div class="effect-text">BIG WIN!</div>
+        </div>
+        
+        <div id="free-spin-effect">
+            <div class="effect-text">FREE SPINS!</div>
+        </div>
+    </div>
+
+    <script>
+        // 游戏状态
+        const gameState = {
+            balance: 1000,
+            currentBet: 1,
+            currentLines: 25,
+            totalWin: 0,
+            isSpinning: false,
+            autoSpin: false,
+            autoSpinCount: 0,
+            symbols: [
+                { id: 0, name: 'SYM1', image: 'images/symbols/100.png', payout: [0, 2, 5, 10, 20] },
+                { id: 1, name: 'SYM2', image: 'images/symbols/101.png', payout: [0, 2, 5, 10, 20] },
+                { id: 2, name: 'SYM3', image: 'images/symbols/102.png', payout: [0, 3, 7, 15, 30] },
+                { id: 3, name: 'SYM4', image: 'images/symbols/103.png', payout: [0, 3, 7, 15, 30] },
+                { id: 4, name: 'SYM5', image: 'images/symbols/104.png', payout: [0, 5, 10, 20, 50] },
+                { id: 5, name: 'SYM6', image: 'images/symbols/105.png', payout: [0, 5, 10, 20, 50] },
+                { id: 6, name: 'SYM7', image: 'images/symbols/106.png', payout: [0, 7, 15, 30, 75] },
+                { id: 7, name: 'SYM8', image: 'images/symbols/107.png', payout: [0, 7, 15, 30, 75] },
+                { id: 8, name: 'SYM9', image: 'images/symbols/108.png', payout: [0, 10, 20, 50, 100] },
+                { id: 9, name: 'SYM10', image: 'images/symbols/109.png', payout: [0, 10, 20, 50, 100] },
+                { id: 10, name: 'BONES', image: 'images/symbols/300.png', payout: [0, 15, 30, 75, 150] },
+                { id: 11, name: 'FREE SPIN', image: 'images/symbols/301.png', payout: [0, 0, 0, 0, 0], isScatter: true },
+                { id: 12, name: 'WILD', image: 'images/symbols/302.png', payout: [0, 0, 0, 0, 0], isWild: true }
+            ],
+            reels: [
+                [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+                [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+                [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+                [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+                [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+            ],
+            paylines: [
+                // 25条赔付线定义
+                [1,1,1,1,1], // 第1条线: 所有中间行
+                [0,0,0,0,0], // 第2条线: 所有上行
+                [2,2,2,2,2], // 第3条线: 所有下行
+                [0,1,2,1,0], // V形线
+                [2,1,0,1,2], // 倒V形线
+                [1,0,0,0,1], // 第6条线
+                [1,2,2,2,1], // 第7条线
+                [0,0,1,2,2], // 第8条线
+                [2,2,1,0,0], // 第9条线
+                [1,0,1,2,1], // 第10条线
+                [1,2,1,0,1], // 第11条线
+                [0,1,1,1,0], // 第12条线
+                [2,1,1,1,2], // 第13条线
+                [1,1,0,1,1], // 第14条线
+                [1,1,2,1,1], // 第15条线
+                [0,2,0,2,0], // 第16条线
+                [2,0,2,0,2], // 第17条线
+                [0,2,2,2,0], // 第18条线
+                [2,0,0,0,2], // 第19条线
+                [0,0,2,0,0], // 第20条线
+                [2,2,0,2,2], // 第21条线
+                [0,1,0,1,0], // 第22条线
+                [2,1,2,1,2], // 第23条线
+                [1,0,2,0,1], // 第24条线
+                [1,2,0,2,1]  // 第25条线
+            ],
+            rtp: 0.4, // 40% RTP
+            freeSpins: 0
+        };
+
+        // 初始化游戏
+        document.addEventListener('DOMContentLoaded', function() {
+            initGame();
+            setupEventListeners();
+            checkOrientation();
+            window.addEventListener('resize', checkOrientation);
+            window.addEventListener('orientationchange', checkOrientation);
+        });
+
+        // 初始化游戏界面
+        function initGame() {
+            createReels();
+            updateDisplays();
+        }
+
+        // 创建转轴
+        function createReels() {
+            const reelsContainer = document.getElementById('reels');
+            reelsContainer.innerHTML = '';
+            
+            for (let i = 0; i < 5; i++) {
+                const reel = document.createElement('div');
+                reel.className = 'reel';
+                reel.id = `reel-${i}`;
+                
+                for (let j = 0; j < 3; j++) {
+                    const symbol = document.createElement('div');
+                    symbol.className = 'symbol';
+                    symbol.dataset.reel = i;
+                    symbol.dataset.position = j;
+                    symbol.textContent = '?';
+                    reel.appendChild(symbol);
+                }
+                
+                reelsContainer.appendChild(reel);
+            }
+        }
+
+        // 设置事件监听器
+        function setupEventListeners() {
+            document.getElementById('spin-button').addEventListener('click', spin);
+            document.getElementById('auto-spin').addEventListener('click', toggleAutoSpin);
+            document.getElementById('bet-plus').addEventListener('click', increaseBet);
+            document.getElementById('bet-minus').addEventListener('click', decreaseBet);
+            document.getElementById('line-plus').addEventListener('click', increaseLines);
+            document.getElementById('line-minus').addEventListener('click', decreaseLines);
+            document.getElementById('info-button').addEventListener('click', togglePaytable);
+        }
+
+        // 旋转转轴
+        function spin() {
+            if (gameState.isSpinning) return;
+            
+            // 检查余额
+            const spinCost = gameState.currentBet * gameState.currentLines;
+            if (gameState.balance < spinCost) {
+                alert('余额不足！');
+                return;
+            }
+            
+            // 扣除投注额
+            gameState.balance -= spinCost;
+            gameState.isSpinning = true;
+            
+            // 开始转轴动画
+            startReelAnimation();
+            
+            // 模拟RNG结果
+            setTimeout(() => {
+                stopReelsAndCheckWin();
+            }, 2000);
+        }
+
+        // 开始转轴动画
+        function startReelAnimation() {
+            const reels = document.querySelectorAll('.reel');
+            
+            reels.forEach((reel, index) => {
+                const symbols = reel.querySelectorAll('.symbol');
+                
+                // 清除之前的赢家状态
+                symbols.forEach(symbol => {
+                    symbol.classList.remove('win');
+                });
+                
+                // 开始动画
+                reel.classList.add('spinning');
+                
+                // 每个转轴依次停止
+                setTimeout(() => {
+                    reel.classList.remove('spinning');
+                }, 1000 + index * 300);
+            });
+            
+            // 清除赢线
+            document.getElementById('win-lines-overlay').innerHTML = '';
+        }
+
+        // 停止转轴并检查中奖
+        function stopReelsAndCheckWin() {
+            // 生成随机结果
+            const result = generateRandomResult();
+            displayResult(result);
+            
+            // 检查中奖
+            const wins = checkWins(result);
+            gameState.totalWin = calculateTotalWin(wins);
+            
+            // 更新余额
+            gameState.balance += gameState.totalWin;
+            
+            // 更新显示
+            updateDisplays();
+            
+            // 显示中奖效果
+            if (wins.length > 0) {
+                showWinEffects(wins);
+                
+                if (gameState.totalWin >= gameState.currentBet * 10) {
+                    showBigWinEffect();
+                }
+            }
+            
+            // 检查免费旋转
+            const scatterCount = countScatters(result);
+            if (scatterCount >= 3) {
+                triggerFreeSpins(scatterCount);
+            }
+            
+            gameState.isSpinning = false;
+            
+            // 如果自动旋转开启，继续旋转
+            if (gameState.autoSpin && gameState.autoSpinCount > 0) {
+                gameState.autoSpinCount--;
+                setTimeout(spin, 1000);
+            }
+        }
+
+        // 生成随机结果（模拟RNG）
+        function generateRandomResult() {
+            const result = [];
+            
+            for (let i = 0; i < 5; i++) {
+                const reelResult = [];
+                for (let j = 0; j < 3; j++) {
+                    // 使用加权随机选择符号，模拟40% RTP
+                    const randomValue = Math.random();
+                    let symbolIndex;
+                    
+                    if (randomValue < 0.6) { // 60% 概率获得低价值符号
+                        symbolIndex = Math.floor(Math.random() * 6); // 符号0-5
+                    } else if (randomValue < 0.85) { // 25% 概率获得中等价值符号
+                        symbolIndex = Math.floor(Math.random() * 4) + 6; // 符号6-9
+                    } else if (randomValue < 0.95) { // 10% 概率获得高价值符号
+                        symbolIndex = 10; // BONES符号
+                    } else if (randomValue < 0.98) { // 3% 概率获得免费旋转符号
+                        symbolIndex = 11; // FREE SPIN符号
+                    } else { // 2% 概率获得WILD符号
+                        symbolIndex = 12; // WILD符号
+                    }
+                    
+                    reelResult.push(symbolIndex);
+                }
+                result.push(reelResult);
+            }
+            
+            return result;
+        }
+
+        // 显示结果
+        function displayResult(result) {
+            for (let i = 0; i < 5; i++) {
+                const reel = document.getElementById(`reel-${i}`);
+                const symbols = reel.querySelectorAll('.symbol');
+                
+                for (let j = 0; j < 3; j++) {
+                    const symbolIndex = result[i][j];
+                    const symbol = symbols[j];
+                    const symbolData = gameState.symbols[symbolIndex];
+                    
+                    symbol.textContent = symbolData.name.charAt(0);
+                    symbol.dataset.symbol = symbolData.name;
+                    
+                    // 如果有图片，使用图片
+                    if (symbolData.image) {
+                        symbol.style.backgroundImage = `url('${symbolData.image}')`;
+                    }
+                }
+            }
+        }
+
+        // 检查中奖
+        function checkWins(result) {
+            const wins = [];
+            
+            // 检查每条赔付线
+            for (let lineIndex = 0; lineIndex < gameState.currentLines; lineIndex++) {
+                const line = gameState.paylines[lineIndex];
+                const lineSymbols = [];
+                
+                // 获取赔付线上的符号
+                for (let reelIndex = 0; reelIndex < 5; reelIndex++) {
+                    const position = line[reelIndex];
+                    lineSymbols.push(result[reelIndex][position]);
+                }
+                
+                // 检查连续匹配的符号
+                let firstSymbol = lineSymbols[0];
+                let count = 1;
+                
+                // 如果第一个符号是WILD，找到第一个非WILD符号
+                if (gameState.symbols[firstSymbol].isWild) {
+                    for (let i = 1; i < lineSymbols.length; i++) {
+                        if (!gameState.symbols[lineSymbols[i]].isWild) {
+                            firstSymbol = lineSymbols[i];
+                            break;
+                        }
+                    }
+                }
+                
+                // 计算连续匹配数
+                for (let i = 1; i < lineSymbols.length; i++) {
+                    const currentSymbol = lineSymbols[i];
+                    const isWild = gameState.symbols[currentSymbol].isWild;
+                    const matches = currentSymbol === firstSymbol || isWild;
+                    
+                    if (matches) {
+                        count++;
+                    } else {
+                        break;
+                    }
+                }
+                
+                // 如果有3个或更多匹配，记录中奖
+                if (count >= 3) {
+                    wins.push({
+                        line: lineIndex,
+                        symbol: firstSymbol,
+                        count: count,
+                        positions: line.map((pos, reelIndex) => ({reel: reelIndex, position: pos}))
+                    });
+                }
+            }
+            
+            return wins;
+        }
+
+        // 计算总赢额
+        function calculateTotalWin(wins) {
+            let totalWin = 0;
+            
+            wins.forEach(win => {
+                const symbol = gameState.symbols[win.symbol];
+                const payout = symbol.payout[win.count - 1] || 0;
+                totalWin += payout * gameState.currentBet;
+            });
+            
+            return totalWin;
+        }
+
+        // 显示中奖效果
+        function showWinEffects(wins) {
+            // 高亮中奖符号
+            wins.forEach(win => {
+                win.positions.forEach(pos => {
+                    const symbol = document.querySelector(`.symbol[data-reel="${pos.reel}"][data-position="${pos.position}"]`);
+                    if (symbol) {
+                        symbol.classList.add('win');
+                    }
+                });
+                
+                // 绘制赢线
+                drawWinLine(win.positions);
+            });
+        }
+
+        // 绘制赢线
+        function drawWinLine(positions) {
+            const svg = document.getElementById('win-lines-overlay');
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            
+            let pathData = 'M ';
+            positions.forEach((pos, index) => {
+                const x = 10 + (pos.reel * 20); // 简化计算，实际应根据布局调整
+                const y = 10 + (pos.position * 33.33);
+                pathData += `${x},${y} `;
+            });
+            
+            path.setAttribute('d', pathData);
+            path.setAttribute('class', 'win-line');
+            path.setAttribute('fill', 'none');
+            svg.appendChild(path);
+        }
+
+        // 显示大奖效果
+        function showBigWinEffect() {
+            const effect = document.getElementById('big-win-effect');
+            effect.style.display = 'flex';
+            
+            // 触发震动（如果设备支持）
+            if (navigator.vibrate) {
+                navigator.vibrate([200, 100, 200, 100, 200, 100, 200]);
+            }
+            
+            setTimeout(() => {
+                effect.style.display = 'none';
+            }, 7000);
+        }
+
+        // 触发免费旋转
+        function triggerFreeSpins(scatterCount) {
+            const freeSpins = scatterCount === 3 ? 10 : scatterCount === 4 ? 15 : 20;
+            gameState.freeSpins += freeSpins;
+            
+            const effect = document.getElementById('free-spin-effect');
+            effect.style.display = 'flex';
+            
+            // 触发震动
+            if (navigator.vibrate) {
+                navigator.vibrate([200, 100, 200, 100, 200]);
+            }
+            
+            setTimeout(() => {
+                effect.style.display = 'none';
+                
+                // 开始免费旋转
+                startFreeSpins();
+            }, 7000);
+        }
+
+        // 开始免费旋转
+        function startFreeSpins() {
+            // 实现免费旋转逻辑
+            alert(`恭喜获得 ${gameState.freeSpins} 次免费旋转！`);
+        }
+
+        // 计算分散符号数量
+        function countScatters(result) {
+            let count = 0;
+            
+            for (let i = 0; i < 5; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (gameState.symbols[result[i][j]].isScatter) {
+                        count++;
+                    }
+                }
+            }
+            
+            return count;
+        }
+
+        // 切换自动旋转
+        function toggleAutoSpin() {
+            gameState.autoSpin = !gameState.autoSpin;
+            
+            if (gameState.autoSpin) {
+                gameState.autoSpinCount = 10; // 默认10次自动旋转
+                document.getElementById('auto-spin').style.background = 'linear-gradient(145deg, #00cc00, #009900)';
+                spin(); // 立即开始旋转
+            } else {
+                document.getElementById('auto-spin').style.background = 'linear-gradient(145deg, #ff3333, #cc0000)';
+            }
+        }
+
+        // 增加投注额
+        function increaseBet() {
+            if (gameState.currentBet < 10) {
+                gameState.currentBet++;
+                updateDisplays();
+            }
+        }
+
+        // 减少投注额
+        function decreaseBet() {
+            if (gameState.currentBet > 1) {
+                gameState.currentBet--;
+                updateDisplays();
+            }
+        }
+
+        // 增加线数
+        function increaseLines() {
+            if (gameState.currentLines < 40) {
+                gameState.currentLines += 5;
+                if (gameState.currentLines > 40) gameState.currentLines = 40;
+                updateDisplays();
+            }
+        }
+
+        // 减少线数
+        function decreaseLines() {
+            if (gameState.currentLines > 25) {
+                gameState.currentLines -= 5;
+                if (gameState.currentLines < 25) gameState.currentLines = 25;
+                updateDisplays();
+            }
+        }
+
+        // 切换赔付表显示
+        function togglePaytable() {
+            const paytable = document.getElementById('paytable');
+            paytable.style.display = paytable.style.display === 'block' ? 'none' : 'block';
+        }
+
+        // 更新显示
+        function updateDisplays() {
+            document.getElementById('balance-display').textContent = gameState.balance;
+            document.getElementById('bet-display').textContent = gameState.currentBet;
+            document.getElementById('lines-display').textContent = gameState.currentLines;
+            document.getElementById('win-display').textContent = gameState.totalWin;
+        }
+
+        // 检查屏幕方向
+        function checkOrientation() {
+            const orientationMessage = document.getElementById('orientation-message');
+            const gameContainer = document.getElementById('game-container');
+            
+            if (window.innerHeight > window.innerWidth) {
+                // 竖屏
+                orientationMessage.style.display = 'flex';
+                gameContainer.style.display = 'none';
+            } else {
+                // 横屏
+                orientationMessage.style.display = 'none';
+                gameContainer.style.display = 'flex';
+            }
+        }
+    </script>
+</body>
+</html>
