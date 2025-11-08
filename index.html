@@ -6,12 +6,12 @@
     <title>Slot Machine</title>
     <style>
         body { margin: 0; padding: 0; background: #000; font-family: Arial, sans-serif; color: white; overflow: hidden; }
-        #game-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; width: 100vw; background: linear-gradient(to bottom, #1a1a1a, #333); }
-        #reels { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; width: 90%; height: 40vh; background: transparent; border: 3px solid gold; padding: 5px; box-sizing: border-box; }
-        .reel { display: flex; flex-direction: column; overflow: hidden; border: 1px solid #555; background: #111; }
-        .symbol { width: 100%; flex: 1; display: flex; align-items: center; justify-content: center; font-size: 2em; font-weight: bold; color: white; border: 1px solid #777; background: #222; }
-        #ui { display: flex; justify-content: space-around; width: 90%; margin-top: 10px; flex-wrap: wrap; }
-        button { background: #4CAF50; border: none; padding: 8px 12px; cursor: pointer; color: white; margin: 2px; border-radius: 5px; font-weight: bold; font-size: 0.9em; }
+        #game-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; width: 100vw; background: linear-gradient(to bottom, #1a1a1a, #333); position: relative; }
+        #reels { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; width: 80%; height: 40vh; background: transparent; border: 3px solid gold; padding: 5px; box-sizing: border-box; justify-items: stretch; align-items: stretch; }
+        .reel { display: flex; flex-direction: column; overflow: hidden; border: 1px solid #555; background: #111; height: 100%; }
+        .symbol { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 3em; font-weight: bold; color: white; border: 1px solid #777; background: #222; width: 100%; box-sizing: border-box; }
+        #ui { display: flex; justify-content: space-around; width: 90%; margin-top: 10px; flex-wrap: wrap; align-items: center; }
+        button { background: #4CAF50; border: none; padding: 8px 12px; cursor: pointer; color: white; margin: 2px; border-radius: 5px; font-weight: bold; font-size: 0.9em; min-width: 60px; }
         button:hover, button:active { background: #45a049; }
         button:disabled { background: #666; cursor: not-allowed; }
         #bet-display, #line-display, #balance, #win { margin: 0 5px; font-size: 1.2em; font-weight: bold; min-width: 80px; text-align: center; }
@@ -22,27 +22,27 @@
         #paytable { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.95); padding: 20px; z-index: 15; max-width: 80%; max-height: 80%; overflow: auto; border-radius: 10px; }
         #paytable h3 { margin-top: 0; }
         #paytable p { margin: 5px 0; }
-        .symbol-100 { background: linear-gradient(#ff6b6b, #ee5a24); color: white; } /* Cherry */
+        .symbol-100 { background: linear-gradient(#ff6b6b, #ee5a24); } /* Cherry */
         .symbol-101 { background: linear-gradient(#feca57, #ff9ff3); color: black; } /* Lemon */
-        .symbol-102 { background: linear-gradient(#48dbfb, #0abde3); color: white; } /* Bar */
-        .symbol-103 { background: linear-gradient(#ff9ff3, #f368e0); color: white; } /* 7 */
-        .symbol-104 { background: linear-gradient(#54a0ff, #5f27cd); color: white; } /* Bell */
-        .symbol-105 { background: linear-gradient(#5f27cd, #341f97); color: white; } /* Diamond */
-        .symbol-106 { background: linear-gradient(#00d2d3, #7b68ee); color: white; } /* Plum */
-        .symbol-107 { background: linear-gradient(#ff6b9d, #c44569); color: white; } /* Grape */
-        .symbol-108 { background: linear-gradient(#f093fb, #f5576c); color: white; } /* Orange */
-        .symbol-109 { background: linear-gradient(#4facfe, #00f2fe); color: white; } /* Watermelon */
-        .symbol-300 { background: linear-gradient(gold, orange); color: black; content: 'BONUS'; } /* Bonus */
-        .symbol-301 { background: linear-gradient(red, pink); color: white; content: 'SCAT'; } /* Scatter */
-        .symbol-302 { background: linear-gradient(green, lime); color: black; content: 'WILD'; } /* Wild */
+        .symbol-102 { background: linear-gradient(#48dbfb, #0abde3); } /* Bar */
+        .symbol-103 { background: linear-gradient(#ff9ff3, #f368e0); } /* 7 */
+        .symbol-104 { background: linear-gradient(#54a0ff, #5f27cd); } /* Bell */
+        .symbol-105 { background: linear-gradient(#5f27cd, #341f97); } /* Diamond */
+        .symbol-106 { background: linear-gradient(#00d2d3, #7b68ee); } /* Plum */
+        .symbol-107 { background: linear-gradient(#ff6b9d, #c44569); } /* Grape */
+        .symbol-108 { background: linear-gradient(#f093fb, #f5576c); } /* Orange */
+        .symbol-109 { background: linear-gradient(#4facfe, #00f2fe); } /* Watermelon */
+        .symbol-300 { background: linear-gradient(gold, orange); color: black; } /* Bonus */
+        .symbol-301 { background: linear-gradient(red, pink); } /* Scatter */
+        .symbol-302 { background: linear-gradient(green, lime); color: black; } /* Wild */
     </style>
 </head>
 <body>
     <div id="game-container">
         <div id="reels"></div>
         <div id="ui">
-            <div><button id="bet-minus">BET-</button><span id="bet-display">Bet: 1</span><button id="bet-plus">BET+</button></div>
-            <div><button id="line-minus">LINE-</button><span id="line-display">Lines: 25</span><button id="line-plus">LINE+</button></div>
+            <div style="display: flex; align-items: center;"><button id="bet-minus">BET-</button><span id="bet-display">Bet: 1</span><button id="bet-plus">BET+</button></div>
+            <div style="display: flex; align-items: center;"><button id="line-minus">LINE-</button><span id="line-display">Lines: 25</span><button id="line-plus">LINE+</button></div>
             <button id="max-bet">MAX BET</button>
             <button id="auto-spin">AUTO 10</button>
             <button id="spin">SPIN</button>
@@ -52,22 +52,22 @@
         </div>
     </div>
     <div id="orientation-prompt">请旋转至横屏<br>Rotate to Landscape</div>
-    <div id="effects">BIG WIN!</div>
+    <div id="effects"></div>
     <div id="paytable">
         <h3>Paytable</h3>
-        <p>Cherry (🍒): 5/25/100</p>
-        <p>Lemon (🍋): 10/50/200</p>
-        <p>Bar (BAR): 15/75/300</p>
-        <p>7 (7️⃣): 20/100/500</p>
-        <p>Bell (🔔): 25/125/750</p>
-        <p>Diamond (💎): 30/150/1000</p>
-        <p>Plum (🍇): 40/200/1500</p>
-        <p>Grape (🍇): 50/250/2000</p>
-        <p>Orange (🍊): 60/300/2500</p>
-        <p>Watermelon (🍉): 70/350/3000</p>
-        <p>Wild: Substitutes any</p>
-        <p>Scatter: 3+ = 10 Free Spins</p>
-        <p>Bonus: 3+ = Bonus Game</p>
+        <p>Cherry (100): 5/25/100 for 3/4/5</p>
+        <p>Lemon (101): 10/50/200</p>
+        <p>Bar (102): 15/75/300</p>
+        <p>7 (103): 20/100/500</p>
+        <p>Bell (104): 25/125/750</p>
+        <p>Diamond (105): 30/150/1000</p>
+        <p>Plum (106): 40/200/1500</p>
+        <p>Grape (107): 50/250/2000</p>
+        <p>Orange (108): 60/300/2500</p>
+        <p>Watermelon (109): 70/350/3000</p>
+        <p>Bonus (300): 20/100/500 + Bonus Game</p>
+        <p>Wild (302): Substitutes any</p>
+        <p>Scatter (301): 3+ = 10 Free Spins</p>
         <button onclick="document.getElementById('paytable').style.display='none'">Close</button>
     </div>
 
@@ -79,10 +79,19 @@
             '104': [25,125,750], '105': [30,150,1000], '106': [40,200,1500], '107': [50,250,2000],
             '108': [60,300,2500], '109': [70,350,3000], '300': [20,100,500]
         };
-        const paylines = Array.from({length: 25}, (_, i) => [[i%3,i%3,i%3,i%3,i%3]]); // Simplified horizontals for demo
+        const paylines = Array.from({length: 25}, (_, i) => {
+            const patterns = [
+                [1,1,1,1,1], [0,0,0,0,0], [2,2,2,2,2],
+                [0,1,2,1,0], [2,1,0,1,2], [0,0,1,2,2], [2,2,1,0,0],
+                [1,0,0,0,1], [1,2,2,2,1], [0,1,1,1,0], [2,1,1,1,2]
+            ];
+            return [patterns[i % patterns.length]];
+        });
 
-        let balance = 1000, bet = 1, lines = 25, freeSpins = 0, autoSpins = 0, spinning = false;
+        let balance = 1000, bet = 1, lines = 25, freeSpins = 0, autoSpins = 0, spinning = false, lastWin = 0;
         let reels = [], grid = [];
+
+        const emojis = ['🍒','🍋','BAR','7️⃣','🔔','💎','🍇','🍇','🍊','🍉','BONUS','SCAT','WILD'];
 
         function getRandomSymbol() {
             const total = symbolWeights.reduce((a,b)=>a+b,0);
@@ -106,7 +115,7 @@
                     const symId = getRandomSymbol();
                     const sym = document.createElement('div');
                     sym.className = `symbol symbol-${symId}`;
-                    sym.textContent = ['🍒','🍋','BAR','7️⃣','🔔','💎','🍇','🍇','🍊','🍉','BONUS','SCAT','WILD'][symbols.indexOf(symId)];
+                    sym.textContent = emojis[symbols.indexOf(symId)];
                     sym.dataset.symbol = symId;
                     reel.appendChild(sym);
                     grid.push(symId);
@@ -123,18 +132,17 @@
             spinning = true;
             balance -= bet * lines;
             updateUI();
-
-            // Animate: blur or simple delay
             document.body.classList.add('shake');
             setTimeout(() => document.body.classList.remove('shake'), 500);
 
-            // New symbols
+            // New symbols with stagger
             for(let col=0; col<5; col++){
+                await new Promise(r => setTimeout(r, 200 * col));
                 for(let row=0; row<3; row++){
                     const symId = getRandomSymbol();
                     const sym = reels[col].children[row];
                     sym.className = `symbol symbol-${symId}`;
-                    sym.textContent = ['🍒','🍋','BAR','7️⃣','🔔','💎','🍇','🍇','🍊','🍉','BONUS','SCAT','WILD'][symbols.indexOf(symId)];
+                    sym.textContent = emojis[symbols.indexOf(symId)];
                     sym.dataset.symbol = symId;
                     grid[col*3 + row] = symId;
                 }
@@ -142,24 +150,16 @@
 
             await new Promise(r => setTimeout(r, 1500));
 
-            let win = calculateWin();
-            balance += win;
-            document.getElementById('win').textContent = `Win: ${win}`;
-            if(win > 0) {
-                if(win > 50) {
-                    showEffect('BIG WIN!');
-                    document.body.classList.add('shake');
-                    setTimeout(() => document.body.classList.remove('shake'), 2000);
-                }
-            }
-
-            // Specials
+            lastWin = calculateWin();
+            balance += lastWin;
+            if(lastWin > 50) showEffect('BIG WIN!');
             const scatters = grid.filter(s => s === '301').length;
             if(scatters >= 3) {
                 freeSpins += 10;
                 showEffect('FREE SPINS!');
-                setTimeout(spin, 1000);
             }
+            const bonuses = grid.filter(s => s === '300').length;
+            if(bonuses >= 3) balance += 100 * bet * bonuses;
 
             spinning = false;
             document.getElementById('spin').disabled = false;
@@ -167,14 +167,14 @@
             if(autoSpins > 0 || freeSpins > 0) {
                 if(freeSpins > 0) freeSpins--;
                 else autoSpins--;
-                setTimeout(spin, 500);
+                setTimeout(spin, 1000);
             }
         }
 
         function calculateWin() {
             let total = 0;
             for(let l = 0; l < lines; l++) {
-                const line = paylines[l % paylines.length][0];
+                const line = paylines[l][0];
                 let syms = line.map((row, col) => grid[col * 3 + row]);
                 let match = 1, baseSym = syms[0];
                 for(let i = 1; i < 5; i++) {
@@ -199,7 +199,7 @@
             document.getElementById('balance').textContent = `Balance: ${Math.floor(balance)}`;
             document.getElementById('bet-display').textContent = `Bet: ${bet}`;
             document.getElementById('line-display').textContent = `Lines: ${lines}`;
-            document.getElementById('win').textContent = `Win: ${win || 0}`;
+            document.getElementById('win').textContent = `Win: ${lastWin}`;
         }
 
         // Events
