@@ -1,13 +1,34 @@
-slot-machine/
-├── index.html
-├── style.css
-├── script.js
-├── images/
-│   ├── symbols/ (100.png ~ 109.png, 300.png, 301.png, 302.png)
-│   ├── ui/ (600.png ~ 609.png)
-│   ├── effects/ (500.png, 501.png, 7777.png, 8888.png)
-│   └── backgrounds/ (9999.png)
-└── audios/
-    ├── main.wav
-    ├── effects/ (win-big.wav, free-spin.wav, win-small.wav)
-    └── ui/ (spin.wav, stop.wav, ui-click.wav)
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slot Machine</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="reel-canvas" width="1920" height="1080"></canvas>
+        <div id="ui-overlay">
+            <img id="bet-display" src="images/ui/605.png" alt="Bet">
+            <button id="bet-plus"><img src="images/ui/600.png" alt="Bet+"></button>
+            <button id="bet-minus"><img src="images/ui/601.png" alt="Bet-"></button>
+            <img id="line-display" src="images/ui/604.png" alt="Lines">
+            <button id="line-plus"><img src="images/ui/606.png" alt="Line+"></button>
+            <button id="line-minus"><img src="images/ui/607.png" alt="Line-"></button>
+            <button id="max-bet"><img src="images/ui/608.png" alt="Max Bet"></button>
+            <button id="spin"><img src="images/ui/602.png" alt="Spin"></button>
+            <button id="auto-spin"><img src="images/ui/603.png" alt="Auto Spin"></button>
+            <button id="info"><img src="images/ui/609.png" alt="Info"></button>
+            <div id="balance">Balance: 1000</div>
+            <div id="win">Win: 0</div>
+        </div>
+        <div id="orientation-prompt">
+            <img src="images/effects/8888.png" alt="Rotate Device">
+            <p>Please rotate to landscape</p>
+        </div>
+    </div>
+    <audio id="bg-music" src="audios/main.wav" loop></audio>
+    <script src="script.js"></script>
+</body>
+</html>
