@@ -1,1 +1,64 @@
+body {
+    margin: 0;
+    padding: 0;
+    background: url('images/backgrounds/9999.png') no-repeat center/cover;
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+}
 
+#game-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#reel-canvas {
+    border: 1px solid #000;
+    background: transparent;
+}
+
+#ui-overlay {
+    position: absolute;
+    bottom: 10%;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+button {
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+button img {
+    width: 50px;
+    height: 50px;
+}
+
+#balance, #win {
+    color: white;
+    font-size: 20px;
+    margin: 0 20px;
+}
+
+#orientation-prompt {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: white;
+    display: none;
+}
+
+@media (orientation: portrait) {
+    #game-container { display: none; }
+    #orientation-prompt { display: block; }
+}
