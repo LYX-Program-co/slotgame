@@ -3,32 +3,307 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Slot Machine</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Slot Machine Game</title>
+    <style>
+        body { margin: 0; padding: 0; background: #000; font-family: Arial, sans-serif; color: white; overflow: hidden; }
+        #game-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; aspect-ratio: 16/9; max-width: 1920px; margin: auto; background: url('images/backgrounds/9999.png') no-repeat center/cover; }
+        #reels { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; width: 80%; height: 50%; background: transparent; border: 2px solid gold; padding: 10px; }
+        .reel { display: flex; flex-direction: column; overflow: hidden; border: 1px solid #333; }
+        .symbol { width: 100%; aspect-ratio: 1/1; background-size: cover; background-color: #222; border: 1px solid #444; }
+        #ui { display: flex; justify-content: space-around; width: 80%; margin-top: 20px; flex-wrap: wrap; }
+        button { background: #4CAF50; border: none; padding: 10px 15px; cursor: pointer; color: white; margin: 5px; border-radius: 5px; font-weight: bold; }
+        button:hover { background: #45a049; }
+        #bet-display, #line-display, #balance, #win { margin: 0 10px; font-size: 18px; font-weight: bold; }
+        #orientation-prompt { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 10; color: white; font-size: 24px; }
+        #effects { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: none; justify-content: center; align-items: center; z-index: 5; background: rgba(255,215,0,0.3); }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); } 20%, 40%, 60%, 80% { transform: translateX(10px); } }
+        .shake { animation: shake 0.5s; }
+        #paytable { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); padding: 20px; z-index: 15; max-width: 80%; }
+    </style>
 </head>
 <body>
     <div id="game-container">
-        <canvas id="reel-canvas" width="1920" height="1080"></canvas>
-        <div id="ui-overlay">
-            <img id="bet-display" src="images/ui/605.png" alt="Bet">
-            <button id="bet-plus"><img src="images/ui/600.png" alt="Bet+"></button>
-            <button id="bet-minus"><img src="images/ui/601.png" alt="Bet-"></button>
-            <img id="line-display" src="images/ui/604.png" alt="Lines">
-            <button id="line-plus"><img src="images/ui/606.png" alt="Line+"></button>
-            <button id="line-minus"><img src="images/ui/607.png" alt="Line-"></button>
-            <button id="max-bet"><img src="images/ui/608.png" alt="Max Bet"></button>
-            <button id="spin"><img src="images/ui/602.png" alt="Spin"></button>
-            <button id="auto-spin"><img src="images/ui/603.png" alt="Auto Spin"></button>
-            <button id="info"><img src="images/ui/609.png" alt="Info"></button>
-            <div id="balance">Balance: 1000</div>
-            <div id="win">Win: 0</div>
-        </div>
-        <div id="orientation-prompt">
-            <img src="images/effects/8888.png" alt="Rotate Device">
-            <p>Please rotate to landscape</p>
+        <div id="reels"></div>
+        <div id="ui">
+            <button id="bet-minus">BET-</button>
+            <span id="bet-display">Bet: 1</span>
+            <button id="bet-plus">BET+</button>
+            <div style="display: flex; align-items: center;">
+                <button id="line-minus">LINE-</button>
+                <span id="line-display">Lines: 25</span>
+                <button id="line-plus">LINE+</button>
+            </div>
+            <button id="max-bet">MAX BET</button>
+            <button id="auto-spin">AUTO (10)</button>
+            <button id="spin">SPIN</button>
+            <button id="info">INFO</button>
+            <span id="balance">Balance: 1000</span>
+            <span id="win">Win: 0</span>
         </div>
     </div>
-    <audio id="bg-music" src="audios/main.wav" loop></audio>
-    <script src="script.js"></script>
+    <div id="orientation-prompt">请旋转手机以开始游戏<br><img src="images/effects/8888.png" style="max-width: 50%;"></div>
+    <div id="effects"></div>
+    <div id="paytable">
+        <h3>Paytable</h3>
+        <p>100: 5/25/100 for 3/4/5</p>
+        <p>101: 10/50/200</p>
+        <!-- Add more -->
+        <p>Wild (302): Substitutes</p>
+        <p>Scatter (301): 3+ = 10 Free Spins</p>
+        <p>Bonus (300): 3+ = Bonus Game</p>
+        <button onclick="document.getElementById('paytable').style.display='none'">Close</button>
+    </div>
+
+    <!-- Audio placeholders - replace with actual files -->
+    <audio id="main-bgm" loop><source src="audios/main.wav" type="audio/wav"></audio>
+    <audio id="spin-sound"><source src="audios/effects/spin.wav" type="audio/wav"></audio>
+    <audio id="stop-sound"><source src="audios/effects/stop.wav" type="audio/wav"></audio>
+    <audio id="ui-click"><source src="audios/effects/ui-click.wav" type="audio/wav"></audio>
+    <audio id="win-small"><source src="audios/effects/win-small.wav" type="audio/wav"></audio>
+    <audio id="win-big"><source src="audios/effects/win-big.wav" type="audio/wav"></audio>
+    <audio id="free-spin"><source src="audios/effects/free-spin.wav" type="audio/wav"></audio>
+
+    <script>
+        // Symbols: 100-109 normal, 300 bonus, 301 scatter, 302 wild
+        const symbols = ['100.png', '101.png', '102.png', '103.png', '104.png', '105.png', '106.png', '107.png', '108.png', '109.png', '300.png', '301.png', '302.png'];
+        const symbolWeights = [20, 18, 16, 14, 12, 10, 8, 6, 4, 2, 1, 1, 0.5]; // For RTP ~90%
+
+        // Paytable: [3,4,5] payouts
+        const paytable = {
+            '100.png': [5, 25, 100],
+            '101.png': [10, 50, 200],
+            '102.png': [15, 75, 300],
+            '103.png': [20, 100, 500],
+            '104.png': [25, 125, 750],
+            '105.png': [30, 150, 1000],
+            '106.png': [40, 200, 1500],
+            '107.png': [50, 250, 2000],
+            '108.png': [60, 300, 2500],
+            '109.png': [70, 350, 3000],
+            '300.png': [20, 100, 500], // Bonus
+            '302.png': [0, 0, 0] // Wild no payout but substitutes
+        };
+
+        // 25 Paylines (positions for 5 reels, 3 rows: 0 top, 1 mid, 2 bottom)
+        const paylines = [
+            [[0,0,0,0,0]], [[1,1,1,1,1]], [[2,2,2,2,2]], // Horizontals
+            [[0,1,2,1,0]], [[2,1,0,1,2]], // V
+            [[0,0,1,2,2]], [[2,2,1,0,0]], // <
+            [[1,0,0,0,1]], [[1,2,2,2,1]], // ^
+            [[0,1,1,1,0]], [[2,1,1,1,2]], // <
+            [[1,1,0,1,1]], [[1,1,2,1,1]], // T
+            [[0,1,0,1,0]], [[2,1,2,1,2]], // X
+            [[1,0,1,0,1]], [[1,2,1,2,1]], // Z
+            [[0,0,0,1,2]], [[2,2,2,1,0]], // /
+            [[0,1,2,2,1]], [[2,1,0,0,1]] // \
+            // Add up to 25, repeat patterns for simplicity
+        ].concat(Array.from({length: 10}, () => paylines[Math.floor(Math.random()*paylines.length)])); // Pad to 25
+
+        let balance = 1000, bet = 1, lines = 25, freeSpins = 0, autoSpins = 0, spinning = false;
+        let reels = [], grid = [];
+
+        // RNG
+        function getRandomSymbol() {
+            const total = symbolWeights.reduce((a,b)=>a+b,0);
+            let r = Math.random() * total;
+            for(let i=0; i<symbolWeights.length; i++){
+                if(r < symbolWeights[i]) return symbols[i];
+                r -= symbolWeights[i];
+            }
+            return symbols[0];
+        }
+
+        // Init
+        function init() {
+            const reelsDiv = document.getElementById('reels');
+            reelsDiv.innerHTML = '';
+            reels = [];
+            for(let i=0; i<5; i++){
+                const reel = document.createElement('div');
+                reel.className = 'reel';
+                for(let j=0; j<3; j++){
+                    const sym = document.createElement('div');
+                    sym.className = 'symbol';
+                    sym.style.backgroundImage = `url('images/symbols/${getRandomSymbol()}')`;
+                    sym.dataset.symbol = sym.style.backgroundImage.slice(-12,-5); // Extract id
+                    reel.appendChild(sym);
+                }
+                reelsDiv.appendChild(reel);
+                reels.push(reel);
+            }
+            updateUI();
+            document.getElementById('main-bgm').play().catch(()=>{}); // Autoplay may fail
+        }
+
+        // Spin
+        async function spin() {
+            if(spinning || balance < bet * lines) return;
+            spinning = true;
+            balance -= bet * lines;
+            updateUI();
+            playSound('spin-sound');
+
+            // Generate new grid
+            grid = [];
+            for(let col=0; col<5; col++){
+                for(let row=0; row<3; row++){
+                    const sym = getRandomSymbol();
+                    const elem = reels[col].children[row];
+                    elem.style.backgroundImage = `url('images/symbols/${sym}')`;
+                    elem.dataset.symbol = sym;
+                    grid.push(sym);
+                }
+            }
+
+            // Animate stop
+            for(let i=0; i<5; i++){
+                await new Promise(r=>setTimeout(r, 1000 + i*200));
+                playSound('ui-click');
+            }
+
+            let win = calculateWin();
+            balance += win;
+            document.getElementById('win').textContent = `Win: ${win}`;
+            if(win > bet*lines*5){ // Big win threshold
+                showEffect('images/effects/500.png', 'win-big', true);
+                playSound('win-big');
+            }else if(win>0){
+                playSound('win-small');
+            }
+
+            // Specials
+            const scatters = grid.filter(s=>s==='301.png').length;
+            if(scatters >=3 && freeSpins===0){
+                freeSpins = 10 + scatters-3*5;
+                showEffect('images/effects/501.png', 'free-spin', true);
+                playSound('free-spin');
+            }
+            const bonuses = grid.filter(s=>s==='300.png').length;
+            if(bonuses >=3){
+                // Simple bonus: add 100*bet
+                balance += 100 * bet * bonuses;
+                showEffect('images/effects/500.png', 'win-big', false);
+            }
+            // Jackpot rare: 5 wilds
+            if(grid.every(s=>s==='302.png')){
+                balance += 10000;
+                showEffect('images/effects/7777.png', 'win-big', true);
+            }
+
+            // Cascade
+            await cascade();
+
+            spinning = false;
+            updateUI();
+            if((autoSpins >0 && !freeSpins) || freeSpins>0){
+                if(freeSpins>0) freeSpins--;
+                else autoSpins--;
+                setTimeout(spin, 500);
+            }
+        }
+
+        // Calculate win
+        function calculateWin(){
+            let total = 0;
+            for(let l=0; l<lines; l++){
+                const line = paylines[l % paylines.length]; // Cycle if <25
+                let symbolsInLine = line[0].map((pos, col) => {
+                    const row = pos; // Simplified: pos is row for each col
+                    return grid[col*3 + row];
+                });
+                let matchLen = 1, sym = symbolsInLine[0];
+                let hasWild = false;
+                for(let i=1; i<5; i++){
+                    let nextSym = symbolsInLine[i];
+                    if(nextSym === '302.png'){ hasWild=true; continue; }
+                    if(nextSym === sym || (sym==='302.png' && hasWild)){ matchLen++; }
+                    else break;
+                }
+                if(matchLen >=3 && paytable[sym] && paytable[sym][matchLen-3]){
+                    total += paytable[sym][matchLen-3] * bet;
+                }
+            }
+            return total;
+        }
+
+        // Cascade simple: remove wins, drop new
+        async function cascade(){
+            // Find winning positions (simplified: if win>0, remove middle row, drop)
+            if(Math.random()>0.3) return; // 30% chance
+            for(let col=0; col<5; col++){
+                // Shift down
+                for(let row=2; row>0; row--){
+                    const upper = reels[col].children[row-1];
+                    const lower = reels[col].children[row];
+                    lower.style.backgroundImage = upper.style.backgroundImage;
+                    lower.dataset.symbol = upper.dataset.symbol;
+                }
+                // New top
+                const newSym = getRandomSymbol();
+                reels[col].children[0].style.backgroundImage = `url('images/symbols/${newSym}')`;
+                reels[col].children[0].dataset.symbol = newSym;
+                grid[col*3] = newSym;
+            }
+            let cascadeWin = calculateWin();
+            if(cascadeWin>0){
+                balance += cascadeWin;
+                document.getElementById('win').textContent = `Win: ${cascadeWin} (Cascade)`;
+                playSound('win-small');
+                await new Promise(r=>setTimeout(r,1000));
+                await cascade(); // Recursive
+            }
+        }
+
+        // Effects
+        function showEffect(img, sound, shake){
+            const eff = document.getElementById('effects');
+            eff.innerHTML = `<img src="${img}" style="max-width:50%; max-height:50%;">`;
+            eff.style.display = 'flex';
+            playSound(sound);
+            if(shake) document.body.classList.add('shake');
+            setTimeout(()=>{
+                eff.style.display='none';
+                document.body.classList.remove('shake');
+            }, 3000);
+        }
+
+        // Sound
+        function playSound(id){
+            document.getElementById(id).play().catch(()=>{}); // Ignore errors
+        }
+
+        // Update UI
+        function updateUI(){
+            document.getElementById('balance').textContent = `Balance: ${Math.round(balance)}`;
+            document.getElementById('bet-display').textContent = `Bet: ${bet}`;
+            document.getElementById('line-display').textContent = `Lines: ${lines}`;
+            document.getElementById('win').textContent = `Win: ${freeSpins>0 ? 'Free Spin' : 0}`;
+        }
+
+        // Events
+        document.getElementById('spin').onclick = ()=>{ playSound('stop-sound'); spin(); };
+        document.getElementById('bet-plus').onclick = ()=>{ bet = Math.min(bet+1,100); updateUI(); playSound('stop-sound'); };
+        document.getElementById('bet-minus').onclick = ()=>{ bet = Math.max(bet-1,1); updateUI(); playSound('stop-sound'); };
+        document.getElementById('line-plus').onclick = ()=>{ lines = Math.min(lines+5,40); updateUI(); playSound('stop-sound'); };
+        document.getElementById('line-minus').onclick = ()=>{ lines = Math.max(lines-5,25); updateUI(); playSound('stop-sound'); };
+        document.getElementById('max-bet').onclick = ()=>{ bet=10; lines=40; updateUI(); playSound('stop-sound'); };
+        document.getElementById('auto-spin').onclick = ()=>{ autoSpins=10; playSound('stop-sound'); spin(); };
+        document.getElementById('info').onclick = ()=>{ document.getElementById('paytable').style.display='block'; playSound('stop-sound'); };
+
+        // Orientation
+        function checkOrientation(){
+            const prompt = document.getElementById('orientation-prompt');
+            if(window.innerHeight > window.innerWidth){
+                prompt.style.display='flex';
+                spinning = false;
+            }else{
+                prompt.style.display='none';
+            }
+        }
+        window.addEventListener('resize', checkOrientation);
+        checkOrientation();
+
+        init();
+    </script>
 </body>
 </html>
