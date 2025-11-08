@@ -9,7 +9,8 @@
         #game-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; width: 100vw; background: linear-gradient(to bottom, #1a1a1a, #333); position: relative; }
         #reels { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; width: 80%; height: 40vh; background: transparent; border: 3px solid gold; padding: 5px; box-sizing: border-box; justify-items: stretch; align-items: stretch; }
         .reel { display: flex; flex-direction: column; overflow: hidden; border: 1px solid #555; background: #111; height: 100%; }
-        .symbol { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 3em; font-weight: bold; color: white; border: 1px solid #777; background: #222; width: 100%; box-sizing: border-box; }
+        .symbol { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 2.5em; font-weight: bold; color: white; border: 1px solid #777; background: #222; width: 100%; box-sizing: border-box; position: relative; }
+        .symbol::before { content: attr(data-emoji); font-size: inherit; }
         #ui { display: flex; justify-content: space-around; width: 90%; margin-top: 10px; flex-wrap: wrap; align-items: center; }
         button { background: #4CAF50; border: none; padding: 8px 12px; cursor: pointer; color: white; margin: 2px; border-radius: 5px; font-weight: bold; font-size: 0.9em; min-width: 60px; }
         button:hover, button:active { background: #45a049; }
@@ -22,19 +23,19 @@
         #paytable { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.95); padding: 20px; z-index: 15; max-width: 80%; max-height: 80%; overflow: auto; border-radius: 10px; }
         #paytable h3 { margin-top: 0; }
         #paytable p { margin: 5px 0; }
-        .symbol-100 { background: linear-gradient(#ff6b6b, #ee5a24); } /* Cherry */
-        .symbol-101 { background: linear-gradient(#feca57, #ff9ff3); color: black; } /* Lemon */
-        .symbol-102 { background: linear-gradient(#48dbfb, #0abde3); } /* Bar */
-        .symbol-103 { background: linear-gradient(#ff9ff3, #f368e0); } /* 7 */
-        .symbol-104 { background: linear-gradient(#54a0ff, #5f27cd); } /* Bell */
-        .symbol-105 { background: linear-gradient(#5f27cd, #341f97); } /* Diamond */
-        .symbol-106 { background: linear-gradient(#00d2d3, #7b68ee); } /* Plum */
-        .symbol-107 { background: linear-gradient(#ff6b9d, #c44569); } /* Grape */
-        .symbol-108 { background: linear-gradient(#f093fb, #f5576c); } /* Orange */
-        .symbol-109 { background: linear-gradient(#4facfe, #00f2fe); } /* Watermelon */
-        .symbol-300 { background: linear-gradient(gold, orange); color: black; } /* Bonus */
-        .symbol-301 { background: linear-gradient(red, pink); } /* Scatter */
-        .symbol-302 { background: linear-gradient(green, lime); color: black; } /* Wild */
+        .symbol-100 { background: linear-gradient(#ff6b6b, #ee5a24); }
+        .symbol-101 { background: linear-gradient(#feca57, #ff9ff3); color: black; }
+        .symbol-102 { background: linear-gradient(#48dbfb, #0abde3); }
+        .symbol-103 { background: linear-gradient(#ff9ff3, #f368e0); }
+        .symbol-104 { background: linear-gradient(#54a0ff, #5f27cd); }
+        .symbol-105 { background: linear-gradient(#5f27cd, #341f97); }
+        .symbol-106 { background: linear-gradient(#00d2d3, #7b68ee); }
+        .symbol-107 { background: linear-gradient(#ff6b9d, #c44569); }
+        .symbol-108 { background: linear-gradient(#f093fb, #f5576c); }
+        .symbol-109 { background: linear-gradient(#4facfe, #00f2fe); }
+        .symbol-300 { background: linear-gradient(gold, orange); color: black; }
+        .symbol-301 { background: linear-gradient(red, pink); }
+        .symbol-302 { background: linear-gradient(green, lime); color: black; }
     </style>
 </head>
 <body>
@@ -91,7 +92,7 @@
         let balance = 1000, bet = 1, lines = 25, freeSpins = 0, autoSpins = 0, spinning = false, lastWin = 0;
         let reels = [], grid = [];
 
-        const emojis = ['🍒','🍋','BAR','7️⃣','🔔','💎','🍇','🍇','🍊','🍉','BONUS','SCAT','WILD'];
+        const emojis = { '100': '🍒', '101': '🍋', '102': 'BAR', '103': '7️⃣', '104': '🔔', '105': '💎', '106': '🍇', '107': '🍇', '108': '🍊', '109': '🍉', '300': 'BONUS', '301': 'SCAT', '302': 'WILD' };
 
         function getRandomSymbol() {
             const total = symbolWeights.reduce((a,b)=>a+b,0);
@@ -115,7 +116,7 @@
                     const symId = getRandomSymbol();
                     const sym = document.createElement('div');
                     sym.className = `symbol symbol-${symId}`;
-                    sym.textContent = emojis[symbols.indexOf(symId)];
+                    sym.dataset.emoji = emojis[symId] || '?';
                     sym.dataset.symbol = symId;
                     reel.appendChild(sym);
                     grid.push(symId);
@@ -135,14 +136,13 @@
             document.body.classList.add('shake');
             setTimeout(() => document.body.classList.remove('shake'), 500);
 
-            // New symbols with stagger
             for(let col=0; col<5; col++){
                 await new Promise(r => setTimeout(r, 200 * col));
                 for(let row=0; row<3; row++){
                     const symId = getRandomSymbol();
                     const sym = reels[col].children[row];
                     sym.className = `symbol symbol-${symId}`;
-                    sym.textContent = emojis[symbols.indexOf(symId)];
+                    sym.dataset.emoji = emojis[symId] || '?';
                     sym.dataset.symbol = symId;
                     grid[col*3 + row] = symId;
                 }
@@ -200,6 +200,10 @@
             document.getElementById('bet-display').textContent = `Bet: ${bet}`;
             document.getElementById('line-display').textContent = `Lines: ${lines}`;
             document.getElementById('win').textContent = `Win: ${lastWin}`;
+            // Refresh symbols display
+            document.querySelectorAll('.symbol').forEach(sym => {
+                sym.textContent = sym.dataset.emoji;
+            });
         }
 
         // Events
@@ -223,6 +227,7 @@
         checkOrientation();
 
         init();
+        updateUI();
     </script>
 </body>
 </html>
