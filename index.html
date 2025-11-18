@@ -1,233 +1,195 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Slot Machine</title>
-    <style>
-        body { margin: 0; padding: 0; background: #000; font-family: Arial, sans-serif; color: white; overflow: hidden; }
-        #game-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; width: 100vw; background: linear-gradient(to bottom, #1a1a1a, #333); position: relative; }
-        #reels { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; width: 80%; height: 40vh; background: transparent; border: 3px solid gold; padding: 5px; box-sizing: border-box; justify-items: stretch; align-items: stretch; }
-        .reel { display: flex; flex-direction: column; overflow: hidden; border: 1px solid #555; background: #111; height: 100%; }
-        .symbol { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 2.5em; font-weight: bold; color: white; border: 1px solid #777; background: #222; width: 100%; box-sizing: border-box; position: relative; }
-        .symbol::before { content: attr(data-emoji); font-size: inherit; }
-        #ui { display: flex; justify-content: space-around; width: 90%; margin-top: 10px; flex-wrap: wrap; align-items: center; }
-        button { background: #4CAF50; border: none; padding: 8px 12px; cursor: pointer; color: white; margin: 2px; border-radius: 5px; font-weight: bold; font-size: 0.9em; min-width: 60px; }
-        button:hover, button:active { background: #45a049; }
-        button:disabled { background: #666; cursor: not-allowed; }
-        #bet-display, #line-display, #balance, #win { margin: 0 5px; font-size: 1.2em; font-weight: bold; min-width: 80px; text-align: center; }
-        #orientation-prompt { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 10; color: white; font-size: 1.5em; flex-direction: column; }
-        #effects { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: none; justify-content: center; align-items: center; z-index: 5; background: rgba(255,215,0,0.5); font-size: 3em; color: gold; }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
-        .shake { animation: shake 0.5s ease-in-out; }
-        #paytable { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.95); padding: 20px; z-index: 15; max-width: 80%; max-height: 80%; overflow: auto; border-radius: 10px; }
-        #paytable h3 { margin-top: 0; }
-        #paytable p { margin: 5px 0; }
-        .symbol-100 { background: linear-gradient(#ff6b6b, #ee5a24); }
-        .symbol-101 { background: linear-gradient(#feca57, #ff9ff3); color: black; }
-        .symbol-102 { background: linear-gradient(#48dbfb, #0abde3); }
-        .symbol-103 { background: linear-gradient(#ff9ff3, #f368e0); }
-        .symbol-104 { background: linear-gradient(#54a0ff, #5f27cd); }
-        .symbol-105 { background: linear-gradient(#5f27cd, #341f97); }
-        .symbol-106 { background: linear-gradient(#00d2d3, #7b68ee); }
-        .symbol-107 { background: linear-gradient(#ff6b9d, #c44569); }
-        .symbol-108 { background: linear-gradient(#f093fb, #f5576c); }
-        .symbol-109 { background: linear-gradient(#4facfe, #00f2fe); }
-        .symbol-300 { background: linear-gradient(gold, orange); color: black; }
-        .symbol-301 { background: linear-gradient(red, pink); }
-        .symbol-302 { background: linear-gradient(green, lime); color: black; }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>老虎机游戏 - 移动端优化版</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="game-container">
-        <div id="reels"></div>
-        <div id="ui">
-            <div style="display: flex; align-items: center;"><button id="bet-minus">BET-</button><span id="bet-display">Bet: 1</span><button id="bet-plus">BET+</button></div>
-            <div style="display: flex; align-items: center;"><button id="line-minus">LINE-</button><span id="line-display">Lines: 25</span><button id="line-plus">LINE+</button></div>
-            <button id="max-bet">MAX BET</button>
-            <button id="auto-spin">AUTO 10</button>
-            <button id="spin">SPIN</button>
-            <button id="info">INFO</button>
-            <span id="balance">Balance: 1000</span>
-            <span id="win">Win: 0</span>
+        <div class="top-info">
+            <div id="win-loss-table" class="info-box">
+                <h3>记录</h3>
+                <div class="scrollable-content">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>局</th>
+                                <th>结果</th>
+                                <th>金额</th>
+                            </tr>
+                        </thead>
+                        <tbody id="win-loss-body"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="jackpot-display" class="info-box jackpot-box">
+                <div class="jackpot-label">JACKPOT</div>
+                <div id="jackpot-amount" class="jackpot-amount">5000.00</div>
+            </div>
+
+            <div id="announcement-board" class="info-box">
+                <h3>公告</h3>
+                <div id="announcement-content" class="scrollable-content">
+                    <div class="announcement-item">欢迎游戏！</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="reels-section">
+            <div id="reels-container">
+                <canvas id="win-lines-canvas"></canvas>
+                <div class="reel" data-reel="0">
+                    <div class="reel-viewport">
+                        <div class="reel-strip"></div>
+                    </div>
+                </div>
+                <div class="reel" data-reel="1">
+                    <div class="reel-viewport">
+                        <div class="reel-strip"></div>
+                    </div>
+                </div>
+                <div class="reel" data-reel="2">
+                    <div class="reel-viewport">
+                        <div class="reel-strip"></div>
+                    </div>
+                </div>
+                <div class="reel" data-reel="3">
+                    <div class="reel-viewport">
+                        <div class="reel-strip"></div>
+                    </div>
+                </div>
+                <div class="reel" data-reel="4">
+                    <div class="reel-viewport">
+                        <div class="reel-strip"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="control-panel">
+            <div class="panel-inner">
+                <div class="display-section">
+                    <div class="display-item">
+                        <span class="display-label">已修改</span>
+                        <span id="modified-display" class="display-value">0.00</span>
+                    </div>
+                    <div class="display-item">
+                        <span class="display-label">线数</span>
+                        <div class="bet-controls">
+                            <span id="lines-display" class="display-value lines-value">25</span>
+                            <button id="btn-switch-lines" class="bet-btn" style="width: 40px; font-size: 12px; margin-left: 5px;">切换</button>
+                        </div>
+                    </div>
+                    <div class="display-item">
+                        <span class="display-label">押注</span>
+                        <div class="bet-controls">
+                            <button id="btn-bet-down" class="bet-btn">-</button>
+                            <span id="bet-display" class="display-value">1.00</span>
+                            <button id="btn-bet-up" class="bet-btn">+</button>
+                        </div>
+                    </div>
+                    <div class="display-item">
+                        <span class="display-label">总注</span>
+                        <span id="total-bet-display" class="display-value total-bet">25.00</span>
+                    </div>
+                    <div class="display-item">
+                        <span class="display-label">中奖</span>
+                        <span id="win-display" class="display-value win-amount">0.00</span>
+                    </div>
+                    <div class="display-item">
+                        <span class="display-label">余额</span>
+                        <span id="balance-display" class="display-value">1000.00</span>
+                    </div>
+                    <div id="free-spins-display" class="display-item hidden">
+                        <span class="display-label">免费</span>
+                        <span id="free-spins-count" class="display-value free-spins">0</span>
+                    </div>
+                    <div id="autoplay-display" class="display-item hidden">
+                        <span class="display-label">自动</span>
+                        <span id="autoplay-count" class="display-value autoplay-text">0</span>
+                    </div>
+                </div>
+
+                <div class="button-section">
+                    <button id="btn-max-bet" class="control-btn">最大</button>
+                    <button id="btn-aut toplay" class="control-btn">自动</button>
+                    <button id="btn-stop-autoplay" class="control-btn hidden">停止</button>
+                    <button id="btn-paytable" class="control-btn">赔付</button>
+                    <button id="btn-spin" class="spin-btn">旋转</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="free-spins-overlay" class="overlay hidden">
+            <div class="modal free-spins-modal">
+                <div class="modal-icon">🎁</div>
+                <h2>恭喜！</h2>
+                <p class="modal-message">获得 <span id="free-spins-awarded">10</span> 次免费旋转！</p>
+                <p class="modal-submessage">所有奖金 x3 倍</p>
+                <button id="btn-start-free-spins" class="modal-btn">开始</button>
+            </div>
+        </div>
+
+        <div id="autoplay-overlay" class="overlay hidden">
+            <div class="modal autoplay-modal">
+                <h2>自动旋转次数</h2>
+                <div class="autoplay-options">
+                    <button class="autoplay-option-btn" data-count="10">10</button>
+                    <button class="autoplay-option-btn" data-count="25">25</button>
+                    <button class="autoplay-option-btn" data-count="50">50</button>
+                    <button class="autoplay-option-btn" data-count="100">100</button>
+                    <button class="autoplay-option-btn" data-count="500">500</button>
+                    <button class="autoplay-option-btn" data-count="1000">1000</button>
+                </div>
+                <button id="btn-cancel-autoplay" class="modal-btn secondary">取消</button>
+            </div>
+        </div>
+
+        <div id="paytable-overlay" class="overlay hidden">
+            <div class="modal paytable-modal">
+                <h2>赔付表</h2>
+                <div id="paytable-content" class="paytable-content"></div>
+                <div class="paytable-info">
+                    <h3>规则说明</h3>
+                    <ul>
+                        <li>固定 25 或 40 条中奖线</li>
+                        <li>总注 = 每线押注 × 线数</li>
+                        <li>至少3个相同符号连续出现</li>
+                        <li>⭐ Wild 替代任何符号</li>
+                        <li>🎁 Scatter 3个触发免费旋转</li>
+                    </ul>
+                    <h3 style="margin-top: 10px;">中奖线</h3>
+                    <div style="font-size: 10px; margin-top: 5px;">
+                        <div>固定 25/40 条中奖线</div>
+                    </div>
+                </div>
+                <button id="btn-close-paytable" class="modal-btn">关闭</button>
+            </div>
+        </div>
+
+        <div id="jackpot-overlay" class="overlay hidden">
+            <div class="modal jackpot-modal">
+                <div class="jackpot-celebration">🎰💰🎉</div>
+                <h2 class="jackpot-title">JACKPOT!</h2>
+                <p class="jackpot-win-message">恭喜中得: <span id="jackpot-win-amount">0</span></p>
+                <button id="btn-close-jackpot" class="modal-btn">继续</button>
+            </div>
+        </div>
+
+        <div id="big-win-overlay" class="overlay hidden">
+            <div class="big-win-animation">
+                <div class="big-win-text">BIG WIN!</div>
+                <div id="big-win-amount" class="big-win-amount">0</div>
+            </div>
         </div>
     </div>
-    <div id="orientation-prompt">请旋转至横屏<br>Rotate to Landscape</div>
-    <div id="effects"></div>
-    <div id="paytable">
-        <h3>Paytable</h3>
-        <p>Cherry (100): 5/25/100 for 3/4/5</p>
-        <p>Lemon (101): 10/50/200</p>
-        <p>Bar (102): 15/75/300</p>
-        <p>7 (103): 20/100/500</p>
-        <p>Bell (104): 25/125/750</p>
-        <p>Diamond (105): 30/150/1000</p>
-        <p>Plum (106): 40/200/1500</p>
-        <p>Grape (107): 50/250/2000</p>
-        <p>Orange (108): 60/300/2500</p>
-        <p>Watermelon (109): 70/350/3000</p>
-        <p>Bonus (300): 20/100/500 + Bonus Game</p>
-        <p>Wild (302): Substitutes any</p>
-        <p>Scatter (301): 3+ = 10 Free Spins</p>
-        <button onclick="document.getElementById('paytable').style.display='none'">Close</button>
-    </div>
 
-    <script>
-        const symbols = ['100','101','102','103','104','105','106','107','108','109','300','301','302'];
-        const symbolWeights = [20,18,16,14,12,10,8,6,4,2,1,1,0.5];
-        const paytable = {
-            '100': [5,25,100], '101': [10,50,200], '102': [15,75,300], '103': [20,100,500],
-            '104': [25,125,750], '105': [30,150,1000], '106': [40,200,1500], '107': [50,250,2000],
-            '108': [60,300,2500], '109': [70,350,3000], '300': [20,100,500]
-        };
-        const paylines = Array.from({length: 25}, (_, i) => {
-            const patterns = [
-                [1,1,1,1,1], [0,0,0,0,0], [2,2,2,2,2],
-                [0,1,2,1,0], [2,1,0,1,2], [0,0,1,2,2], [2,2,1,0,0],
-                [1,0,0,0,1], [1,2,2,2,1], [0,1,1,1,0], [2,1,1,1,2]
-            ];
-            return [patterns[i % patterns.length]];
-        });
-
-        let balance = 1000, bet = 1, lines = 25, freeSpins = 0, autoSpins = 0, spinning = false, lastWin = 0;
-        let reels = [], grid = [];
-
-        const emojis = { '100': '🍒', '101': '🍋', '102': 'BAR', '103': '7️⃣', '104': '🔔', '105': '💎', '106': '🍇', '107': '🍇', '108': '🍊', '109': '🍉', '300': 'BONUS', '301': 'SCAT', '302': 'WILD' };
-
-        function getRandomSymbol() {
-            const total = symbolWeights.reduce((a,b)=>a+b,0);
-            let r = Math.random() * total;
-            for(let i=0; i<symbolWeights.length; i++){
-                if(r < symbolWeights[i]) return symbols[i];
-                r -= symbolWeights[i];
-            }
-            return symbols[0];
-        }
-
-        function init() {
-            const reelsDiv = document.getElementById('reels');
-            reelsDiv.innerHTML = '';
-            reels = [];
-            grid = [];
-            for(let col=0; col<5; col++){
-                const reel = document.createElement('div');
-                reel.className = 'reel';
-                for(let row=0; row<3; row++){
-                    const symId = getRandomSymbol();
-                    const sym = document.createElement('div');
-                    sym.className = `symbol symbol-${symId}`;
-                    sym.dataset.emoji = emojis[symId] || '?';
-                    sym.dataset.symbol = symId;
-                    reel.appendChild(sym);
-                    grid.push(symId);
-                }
-                reelsDiv.appendChild(reel);
-                reels.push(reel);
-            }
-            updateUI();
-        }
-
-        async function spin() {
-            if(spinning || balance < bet * lines) return;
-            document.getElementById('spin').disabled = true;
-            spinning = true;
-            balance -= bet * lines;
-            updateUI();
-            document.body.classList.add('shake');
-            setTimeout(() => document.body.classList.remove('shake'), 500);
-
-            for(let col=0; col<5; col++){
-                await new Promise(r => setTimeout(r, 200 * col));
-                for(let row=0; row<3; row++){
-                    const symId = getRandomSymbol();
-                    const sym = reels[col].children[row];
-                    sym.className = `symbol symbol-${symId}`;
-                    sym.dataset.emoji = emojis[symId] || '?';
-                    sym.dataset.symbol = symId;
-                    grid[col*3 + row] = symId;
-                }
-            }
-
-            await new Promise(r => setTimeout(r, 1500));
-
-            lastWin = calculateWin();
-            balance += lastWin;
-            if(lastWin > 50) showEffect('BIG WIN!');
-            const scatters = grid.filter(s => s === '301').length;
-            if(scatters >= 3) {
-                freeSpins += 10;
-                showEffect('FREE SPINS!');
-            }
-            const bonuses = grid.filter(s => s === '300').length;
-            if(bonuses >= 3) balance += 100 * bet * bonuses;
-
-            spinning = false;
-            document.getElementById('spin').disabled = false;
-            updateUI();
-            if(autoSpins > 0 || freeSpins > 0) {
-                if(freeSpins > 0) freeSpins--;
-                else autoSpins--;
-                setTimeout(spin, 1000);
-            }
-        }
-
-        function calculateWin() {
-            let total = 0;
-            for(let l = 0; l < lines; l++) {
-                const line = paylines[l][0];
-                let syms = line.map((row, col) => grid[col * 3 + row]);
-                let match = 1, baseSym = syms[0];
-                for(let i = 1; i < 5; i++) {
-                    if(syms[i] === baseSym || syms[i] === '302') match++;
-                    else break;
-                }
-                if(match >= 3 && paytable[baseSym]) {
-                    total += paytable[baseSym][match - 3] * bet;
-                }
-            }
-            return total;
-        }
-
-        function showEffect(text) {
-            const eff = document.getElementById('effects');
-            eff.textContent = text;
-            eff.style.display = 'flex';
-            setTimeout(() => eff.style.display = 'none', 3000);
-        }
-
-        function updateUI() {
-            document.getElementById('balance').textContent = `Balance: ${Math.floor(balance)}`;
-            document.getElementById('bet-display').textContent = `Bet: ${bet}`;
-            document.getElementById('line-display').textContent = `Lines: ${lines}`;
-            document.getElementById('win').textContent = `Win: ${lastWin}`;
-            // Refresh symbols display
-            document.querySelectorAll('.symbol').forEach(sym => {
-                sym.textContent = sym.dataset.emoji;
-            });
-        }
-
-        // Events
-        document.getElementById('spin').onclick = () => spin();
-        document.getElementById('bet-plus').onclick = () => { bet = Math.min(bet + 1, 50); updateUI(); };
-        document.getElementById('bet-minus').onclick = () => { bet = Math.max(bet - 1, 1); updateUI(); };
-        document.getElementById('line-plus').onclick = () => { lines = Math.min(lines + 5, 40); updateUI(); };
-        document.getElementById('line-minus').onclick = () => { lines = Math.max(lines - 5, 25); updateUI(); };
-        document.getElementById('max-bet').onclick = () => { bet = 10; lines = 40; updateUI(); };
-        document.getElementById('auto-spin').onclick = () => { autoSpins = 10; spin(); };
-        document.getElementById('info').onclick = () => document.getElementById('paytable').style.display = 'block';
-
-        // Orientation
-        function checkOrientation() {
-            const isLandscape = window.innerWidth > window.innerHeight;
-            document.getElementById('orientation-prompt').style.display = isLandscape ? 'none' : 'flex';
-            if(!isLandscape) spinning = false;
-        }
-        window.addEventListener('resize', checkOrientation);
-        window.addEventListener('orientationchange', checkOrientation);
-        checkOrientation();
-
-        init();
-        updateUI();
-    </script>
+    <script src="game.js"></script>
 </body>
 </html>
