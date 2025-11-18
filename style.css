@@ -1,64 +1,782 @@
-body {
+/* ==================== 全局设置 (修改) ==================== */
+:root {
+    --primary-gold: #FFD700;
+    --dark-bg: #1a0d00;
+    --card-bg: rgba(0, 0, 0, 0.85);
+    --border-gold: #DAA520;
+    --text-white: #FFFFFF;
+    --text-gray: #AAAAAA;
+    --red-btn: #DC143C;
+    --green-win: #00FF00;
+    --transition: all 0.3s ease;
+    
+    /* 调整尺寸以确保 SymbolHeight 是 ReelHeight 的 1/3，修复 JS 冲突 */
+    --reel-width: 100px;
+    --reel-height: 300px; /* 3个可见符号，每个100px */
+    --symbol-height: 100px;
+
+    /* 3D 效果相关变量 */
+    --base-spin-duration: 0.10s; /* 基础旋转动画时间 */
+    --stop-bounce-duration: 0.5s; /* 停止时的回弹动画时间 */
+}
+
+* {
     margin: 0;
     padding: 0;
-    background: url('images/backgrounds/9999.png') no-repeat center/cover;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
     overflow: hidden;
-    width: 100vw;
-    height: 100vh;
+    font-family: 'Arial', 'Microsoft YaHei', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    position: fixed;
+    overscroll-behavior: none;
 }
 
+body {
+    background: linear-gradient(135deg, #1a0033 0%, #330000 50%, #4d0000 100%);
+    color: var(--text-white);
+    touch-action: pan-x pan-y;
+    user-select: none;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* ==================== 游戏容器 (修改) ==================== */
 #game-container {
-    position: relative;
     width: 100vw;
     height: 100vh;
+    height: 100dvh;
     display: flex;
-    justify-content: center;
-    align-items: center;
+    flex-direction: column;
+    position: relative;
+    background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+    overflow: hidden;
 }
 
-#reel-canvas {
-    border: 1px solid #000;
-    background: transparent;
-}
-
-#ui-overlay {
-    position: absolute;
-    bottom: 10%;
-    left: 50%;
-    transform: translateX(-50%);
+/* ==================== 顶部信息区 (无修改) ==================== */
+.top-info {
     display: flex;
-    align-items: center;
-    gap: 10px;
+    justify-content: space-between;
+    padding: 5px;
+    z-index: 10;
+    flex-shrink: 0;
+    gap: 5px;
 }
 
-button {
-    background: none;
-    border: none;
-    cursor: pointer;
+.info-box {
+    background: var(--card-bg);
+    border: 2px solid var(--primary-gold);
+    border-radius: 6px;
+    padding: 6px;
+    backdrop-filter: blur(5px);
+    font-size: 10px;
+    flex: 1;
+    min-width: 0;
 }
 
-button img {
-    width: 50px;
-    height: 50px;
-}
-
-#balance, #win {
-    color: white;
-    font-size: 20px;
-    margin: 0 20px;
-}
-
-#orientation-prompt {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+.info-box h3 {
+    color: var(--primary-gold);
+    font-size: 10px;
+    margin-bottom: 4px;
     text-align: center;
-    color: white;
-    display: none;
+    text-transform: uppercase;
 }
 
-@media (orientation: portrait) {
-    #game-container { display: none; }
-    #orientation-prompt { display: block; }
+.scrollable-content {
+    max-height: 80px;
+    overflow-y: auto;
+    font-size: 9px;
+}
+
+.scrollable-content::-webkit-scrollbar {
+    width: 3px;
+}
+
+.scrollable-content::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.scrollable-content::-webkit-scrollbar-thumb {
+    background: var(--primary-gold);
+    border-radius: 2px;
+}
+
+/* 输赢记录表 */
+#win-loss-table table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#win-loss-table th,
+#win-loss-table td {
+    border: 1px solid var(--border-gold);
+    padding: 2px 4px;
+    text-align: center;
+    font-size: 9px;
+}
+
+#win-loss-table th {
+    background: rgba(218, 165, 32, 0.2);
+    color: var(--primary-gold);
+}
+
+.result-win {
+    color: var(--green-win);
+}
+
+.result-lose {
+    color: #FF4444;
+}
+
+/* Jackpot 显示 */
+.jackpot-box {
+    text-align: center;
+    padding: 8px 10px;
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+    border: 3px solid #FFE55C;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+}
+
+.jackpot-label {
+    font-size: 9px;
+    font-weight: bold;
+    color: #8B0000;
+    margin-bottom: 2px;
+}
+
+.jackpot-amount {
+    font-size: 16px;
+    font-weight: bold;
+    color: #FFFFFF;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+/* 公告栏 */
+.announcement-item {
+    padding: 3px 0;
+    border-bottom: 1px solid rgba(255, 215, 0, 0.3);
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* ==================== 卷轴区域 (修改) ==================== */
+#reels-section {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 5px;
+    min-height: 0;
+    /* 3D 舞台 */
+    perspective: 800px; 
+}
+
+#reels-3d-wrapper {
+    /* 倾斜整个卷轴组 */
+    transform: rotateX(10deg) translateZ(0); 
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.9);
+    border-radius: 10px;
+}
+
+#reels-container {
+    position: relative;
+    display: flex;
+    gap: 6px;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.7);
+    border: 5px solid #8B4513;
+    border-radius: 10px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.7);
+    /* 保持 3D 转换 */
+    transform-style: preserve-3d;
+}
+
+#win-lines-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 5;
+}
+
+.reel {
+    width: var(--reel-width);
+    flex-shrink: 0;
+    /* 3D 转换 */
+    transform-style: preserve-3d;
+    transition: transform var(--stop-bounce-duration) ease-out;
+}
+
+.reel-viewport {
+    width: 100%;
+    height: var(--reel-height);
+    background: linear-gradient(180deg, #000000 0%, #1a1a1a 100%);
+    border: 3px solid #333333;
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.8);
+    transform-style: preserve-3d;
+}
+
+.reel-strip {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    will-change: transform;
+    transform-style: preserve-3d;
+    /* 移除原始 transform，交给 JS 动态控制 */
+}
+
+.symbol {
+    width: 100%;
+    height: var(--symbol-height);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 42px;
+    background: rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
+    position: relative;
+    /* 符号背景光泽 */
+    box-shadow: inset 0 0 5px rgba(255, 255, 255, 0.1);
+    filter: none; /* 确保停止时移除模糊 */
+    transition: filter 0.5s ease;
+}
+
+/* 3D 旋转动画 */
+.reel.spinning .reel-strip {
+    animation: realSpin var(--base-spin-duration) linear infinite;
+}
+
+@keyframes realSpin {
+    from { transform: translateY(calc(-1 * var(--symbol-height))) rotateX(5deg); }
+    to { transform: translateY(0) rotateX(0deg); }
+}
+
+/* 旋转时的模糊效果 */
+.reel.spinning .symbol {
+    filter: blur(5px) brightness(0.8);
+}
+
+/* 中奖高亮 (添加光线投射效果) */
+.symbol.highlight {
+    animation: highlight 0.4s ease-in-out 4, glow 1s infinite alternate;
+    border: 3px solid var(--primary-gold);
+    box-shadow: 0 0 20px var(--primary-gold), inset 0 0 15px rgba(255, 215, 0, 0.5);
+    z-index: 10;
+    border-radius: 4px;
+    /* 微微放大强调 */
+    transform: scale(1.05); 
+}
+
+@keyframes highlight {
+    0%, 100% {
+        transform: scale(1.05);
+        filter: brightness(1);
+    }
+    50% {
+        transform: scale(1.15);
+        filter: brightness(1.5);
+    }
+}
+
+@keyframes glow {
+    from { box-shadow: 0 0 20px var(--primary-gold), inset 0 0 15px rgba(255, 215, 0, 0.5); }
+    to { box-shadow: 0 0 35px var(--primary-gold), inset 0 0 20px rgba(255, 215, 0, 0.8); }
+}
+
+/* ==================== 控制面板 (无修改) ==================== */
+#control-panel {
+    background: var(--card-bg);
+    border-top: 3px solid var(--primary-gold);
+    padding: 10px 8px;
+    backdrop-filter: blur(10px);
+    flex-shrink: 0;
+}
+
+.panel-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.display-section {
+    display: flex;
+    justify-content: space-around;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.display-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    align-items: center;
+    min-width: 60px;
+}
+
+.display-label {
+    font-size: 9px;
+    color: var(--text-gray);
+    text-transform: uppercase;
+}
+
+.display-value {
+    font-size: 14px;
+    font-weight: bold;
+    color: var(--primary-gold);
+}
+
+.win-amount {
+    color: var(--green-win);
+}
+
+.free-spins {
+    color: #FF69B4;
+}
+
+.autoplay-text {
+    color: #00BFFF;
+}
+
+.lines-value {
+    color: #00FF7F;
+}
+
+.total-bet {
+    color: #FFA500;
+}
+
+/* 押注控制 */
+.bet-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.bet-btn {
+    width: 28px;
+    height: 28px;
+    background: #333333;
+    border: 2px solid var(--primary-gold);
+    border-radius: 4px;
+    color: var(--primary-gold);
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bet-btn:active {
+    transform: scale(0.9);
+    background: #444444;
+}
+
+/* 按钮区域 */
+.button-section {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+}
+
+.control-btn {
+    padding: 10px 12px;
+    background: #333333;
+    border: 2px solid var(--primary-gold);
+    border-radius: 6px;
+    color: var(--primary-gold);
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: var(--transition);
+    white-space: nowrap;
+    flex: 1;
+    min-width: 50px;
+}
+
+.control-btn:active {
+    transform: scale(0.95);
+    background: #444444;
+}
+
+.spin-btn {
+    padding: 12px 30px;
+    background: linear-gradient(135deg, var(--red-btn) 0%, #FF1744 100%);
+    border: 3px solid #FF69B4;
+    border-radius: 8px;
+    color: var(--text-white);
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: var(--transition);
+    box-shadow: 0 4px 15px rgba(220, 20, 60, 0.5);
+    text-transform: uppercase;
+    flex: 2;
+}
+
+.spin-btn:active {
+    transform: scale(0.95);
+    box-shadow: 0 2px 10px rgba(220, 20, 60, 0.7);
+}
+
+.spin-btn:disabled {
+    background: #555555;
+    border-color: #777777;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* ==================== 弹窗样式 (无修改) ==================== */
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    background: rgba(0, 0, 0, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.2s ease-out;
+    padding: 20px;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal {
+    background: linear-gradient(135deg, #2d1b4e 0%, #4a2c6d 100%);
+    border: 3px solid var(--primary-gold);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 10px 50px rgba(0, 0, 0, 0.8);
+    animation: scaleIn 0.2s ease-out;
+    max-width: 90vw;
+    max-height: 85vh;
+    overflow-y: auto;
+}
+
+@keyframes scaleIn {
+    from {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.modal h2 {
+    color: var(--primary-gold);
+    font-size: 24px;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+}
+
+.modal-icon {
+    font-size: 60px;
+    margin-bottom: 15px;
+    animation: bounce 1s ease-in-out infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-15px); }
+}
+
+.modal-message {
+    font-size: 16px;
+    margin-bottom: 8px;
+    color: var(--text-white);
+}
+
+.modal-submessage {
+    font-size: 14px;
+    color: #FFD700;
+    margin-bottom: 15px;
+}
+
+.modal-btn {
+    padding: 12px 30px;
+    background: var(--primary-gold);
+    border: none;
+    border-radius: 8px;
+    color: #000000;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: var(--transition);
+    margin: 5px;
+}
+
+.modal-btn:active {
+    transform: scale(0.95);
+    background: #FFE55C;
+}
+
+.modal-btn.secondary {
+    background: #666666;
+    color: var(--text-white);
+}
+
+/* 自动旋转选项 */
+.autoplay-options {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin: 15px 0;
+}
+
+.autoplay-option-btn {
+    padding: 15px 20px;
+    background: #444444;
+    border: 2px solid var(--primary-gold);
+    border-radius: 8px;
+    color: var(--primary-gold);
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.autoplay-option-btn:active {
+    transform: scale(0.95);
+    background: #555555;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+}
+
+/* 赔付表 */
+.paytable-modal {
+    max-width: 600px;
+    width: 90vw;
+}
+
+.paytable-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+    margin: 15px 0;
+    max-height: 50vh;
+    overflow-y: auto;
+}
+
+.paytable-item {
+    background: rgba(0, 0, 0, 0.5);
+    border: 2px solid var(--border-gold);
+    border-radius: 6px;
+    padding: 10px;
+}
+
+.paytable-symbol {
+    font-size: 36px;
+    margin-bottom: 5px;
+}
+
+.paytable-payouts {
+    font-size: 10px;
+    color: var(--text-white);
+}
+
+.paytable-payouts div {
+    margin: 2px 0;
+}
+
+.paytable-special {
+    color: #FFD700;
+    font-size: 9px;
+    font-style: italic;
+}
+
+.paytable-info {
+    background: rgba(0, 0, 0, 0.5);
+    border: 2px solid #8B008B;
+    border-radius: 6px;
+    padding: 10px;
+    margin-top: 15px;
+    text-align: left;
+}
+
+.paytable-info h3 {
+    color: var(--primary-gold);
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+.paytable-info ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.paytable-info li {
+    padding: 3px 0;
+    color: var(--text-white);
+    font-size: 11px;
+}
+
+.paytable-info li::before {
+    content: "• ";
+    color: var(--primary-gold);
+    font-weight: bold;
+}
+
+/* Jackpot 中奖 */
+.jackpot-celebration {
+    font-size: 80px;
+    animation: bounce 0.5s ease-in-out infinite;
+}
+
+.jackpot-title {
+    font-size: 48px;
+    color: var(--primary-gold);
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+    animation: pulse 1s ease-in-out infinite;
+}
+
+.jackpot-win-message {
+    font-size: 24px;
+    margin: 15px 0;
+    color: var(--text-white);
+}
+
+/* 大奖动画 (添加粒子效果和震动) */
+.big-win-animation {
+    text-align: center;
+    animation: scaleIn 0.3s ease-out, screen-shake 0.1s ease-in-out infinite;
+    position: relative;
+}
+
+@keyframes screen-shake {
+    0%, 100% { transform: translate(1px Shiv, 1px) rotate(0deg); }
+    25% { transform: translate(-1px, 0) rotate(-1deg); }
+    50% { transform: translate(1px, -1px) rotate(1deg); }
+    75% { transform: translate(-1px, 1px) rotate(-1deg); }
+}
+
+.big-win-text {
+    font-size: 60px;
+    font-weight: bold;
+    color: var(--primary-gold);
+    text-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+    animation: pulse 0.5s ease-in-out infinite;
+}
+
+.big-win-amount {
+    font-size: 36px;
+    color: var(--green-win);
+    margin-top: 15px;
+    text-shadow: 0 0 20px rgba(0, 255, 0, 0.8);
+}
+
+/* ==================== 响应式优化 (修改) ==================== */
+@media (max-width: 480px) {
+    :root {
+        --reel-width: 65px;
+        --reel-height: 195px; /* 3 * 65px */
+        --symbol-height: 65px;
+    }
+    
+    .symbol {
+        font-size: 36px;
+    }
+    
+    .info-box {
+        font-size: 9px;
+    }
+    
+    .display-value {
+        font-size: 12px;
+    }
+    
+    .control-btn {
+        font-size: 11px;
+        padding: 8px 10px;
+    }
+    
+    .spin-btn {
+        font-size: 14px;
+        padding: 10px 20px;
+    }
+}
+
+@media (min-width: 768px) {
+    :root {
+        --reel-width: 50px;
+        --reel-height: 150px; /* 3 * 50px */
+        --symbol-height: 50px;
+    }
+    
+    .symbol {
+        font-size: 56px;
+    }
+    
+    .top-info {
+        padding: 10px;
+    }
+    
+    .info-box {
+        font-size: 12px;
+        padding: 10px;
+    }
+    
+    .display-value {
+        font-size: 18px;
+    }
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+    .top-info {
+        padding: 3px;
+        gap: 3px;
+    }
+    
+    .info-box {
+        padding: 4px;
+        font-size: 8px;
+    }
+    
+    #reels-section {
+        padding: 5px;
+    }
+    
+    #control-panel {
+        padding: 6px;
+    }
 }
